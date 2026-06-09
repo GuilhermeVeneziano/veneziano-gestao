@@ -513,24 +513,46 @@
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
+// =================== SUPABASE ===================
+const SUPABASE_URL = 'https://sswcegohbegzjdobrrtu.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNzd2NlZ29oYmVnempkb2JycnR1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA5NzQ3MTAsImV4cCI6MjA5NjU1MDcxMH0.B4lPuoD29GhUGQE5MqD9GpV7Tf7v-H8QflRd_-ede3o';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
 // =================== STATE ===================
 let state = {
   obras: [],
-  transacoes: [],
-  nextObraId: 1,
-  nextTxnId: 1
+  transacoes: []
 };
 
-function loadState() {
-  const saved = localStorage.getItem('atrio_gestao_v1');
-  if (saved) {
-    try { state = JSON.parse(saved); } catch(e) {}
-  }
+async function loadState() {
+  const { data: obras } = await sb.from('obras').select('*').order('created_at', { ascending: true });
+  const { data: transacoes } = await sb.from('transacoes').select('*').order('data', { ascending: false });
+  state.obras = obras || [];
+  state.transacoes = transacoes || [];
 }
 
-function saveState() {
-  localStorage.setItem('atrio_gestao_v1', JSON.stringify(state));
+async function saveObra(obra) {
+  const { data, error } = await sb.from('obras').insert([obra]).select().single();
+  if (error) { showToast('Erro ao salvar obra: ' + error.message); return null; }
+  return data;
+}
+
+async function updateObra(id, updates) {
+  const { error } = await sb.from('obras').update(updates).eq('id', id);
+  if (error) showToast('Erro ao atualizar obra');
+}
+
+async function deleteObra(id) {
+  await sb.from('transacoes').delete().eq('obra_id', id);
+  await sb.from('obras').delete().eq('id', id);
+}
+
+async function saveTransacao(txn) {
+  const { data, error } = await sb.from('transacoes').insert([txn]).select().single();
+  if (error) { showToast('Erro ao salvar lançamento: ' + error.message); return null; }
+  return data;
 }
 
 // =================== FORMAT ===================
@@ -608,7 +630,7 @@ function renderPainel() {
       const recebido = getRecebidoObra(o.id);
       const gasto = getGastoObra(o.id);
       const saldo = getSaldoObra(o.id);
-      const pctGasto = o.total > 0 ? Math.min(100, (gasto / (o.custoEstimado || o.total)) * 100) : 0;
+      const pctGasto = o.total > 0 ? Math.min(100, (gasto / (o.custo_estimado || o.total)) * 100) : 0;
       const pctRec = o.total > 0 ? Math.min(100, (recebido / o.total) * 100) : 0;
       const fillClass = pctGasto > 90 ? 'fill-red' : pctGasto > 70 ? 'fill-yellow' : 'fill-green';
       return `<div class="contract-item" onclick="verDetalheObra(${o.id})">
@@ -617,7 +639,7 @@ function renderPainel() {
             <div class="ci-name">${o.nome}</div>
             <div class="ci-client">${o.cliente}</div>
           </div>
-          <span class="badge ${saldo < 0 ? 'badge-red' : saldo < (o.custoEstimado * 0.2) ? 'badge-yellow' : 'badge-green'}">${fmt(saldo)}</span>
+          <span class="badge ${saldo < 0 ? 'badge-red' : saldo < (o.custo_estimado * 0.2) ? 'badge-yellow' : 'badge-green'}">${fmt(saldo)}</span>
         </div>
         <div class="progress-wrap">
           <div class="progress-label"><span>Custo consumido</span><span>${pctGasto.toFixed(0)}%</span></div>
@@ -639,7 +661,7 @@ function renderPainel() {
     txnEl.innerHTML = '<div class="text-muted" style="font-size:13px;padding:16px 0;text-align:center">Nenhuma movimentação ainda.</div>';
   } else {
     txnEl.innerHTML = ultimas.map(t => {
-      const obra = state.obras.find(o => o.id === t.obraId);
+      const obra = state.obras.find(o => o.id === t.obra_id);
       const isIncome = t.tipo !== 'saida';
       return `<div class="txn-item">
         <div>
@@ -654,10 +676,10 @@ function renderPainel() {
 
 // =================== HELPERS FINANCEIROS ===================
 function getRecebidoObra(id) {
-  return state.transacoes.filter(t => t.obraId === id && (t.tipo === 'entrada' || t.tipo === 'pagamento')).reduce((a,t) => a+t.valor, 0);
+  return state.transacoes.filter(t => t.obra_id === id && (t.tipo === 'entrada' || t.tipo === 'pagamento')).reduce((a,t) => a+t.valor, 0);
 }
 function getGastoObra(id) {
-  return state.transacoes.filter(t => t.obraId === id && t.tipo === 'saida').reduce((a,t) => a+t.valor, 0);
+  return state.transacoes.filter(t => t.obra_id === id && t.tipo === 'saida').reduce((a,t) => a+t.valor, 0);
 }
 function getSaldoObra(id) {
   return getRecebidoObra(id) - getGastoObra(id);
@@ -679,7 +701,7 @@ function renderObras() {
     const recebido = getRecebidoObra(o.id);
     const gasto = getGastoObra(o.id);
     const saldo = getSaldoObra(o.id);
-    const pctGasto = (o.custoEstimado||0) > 0 ? Math.min(100,(gasto/(o.custoEstimado))*100) : 0;
+    const pctGasto = (o.custo_estimado||0) > 0 ? Math.min(100,(gasto/(o.custo_estimado))*100) : 0;
     const fillClass = pctGasto > 90 ? 'fill-red' : pctGasto > 70 ? 'fill-yellow' : 'fill-green';
     const statusBadge = o.status === 'ativa' ? 'badge-green' : o.status === 'concluida' ? 'badge-gold' : 'badge-red';
     return `<div class="contract-item" onclick="verDetalheObra(${o.id})">
@@ -736,37 +758,30 @@ function calcObra() {
   }
 }
 
-function salvarObra() {
+async function salvarObra() {
   const nome = document.getElementById('o-nome').value.trim();
   const cliente = document.getElementById('o-cliente').value.trim();
   const total = parseFloat(document.getElementById('o-total').value) || 0;
   const pctCusto = parseFloat(document.getElementById('o-pct-custo').value) || 60;
   const tipo = document.querySelector('input[name="o-tipo"]:checked').value;
 
-  if (!nome || !cliente || !total) {
-    showToast('Preencha nome, cliente e valor total');
-    return;
-  }
-  if (total < 1) {
-    showToast('Valor total inválido');
-    return;
-  }
+  if (!nome || !cliente || !total) { showToast('Preencha nome, cliente e valor total'); return; }
+  if (total < 1) { showToast('Valor total inválido'); return; }
 
   const obra = {
-    id: state.nextObraId++,
     nome, cliente, total, tipo,
-    custoEstimado: total * (pctCusto/100),
-    margemEstimada: total * (1 - pctCusto/100),
-    pctCusto,
-    inicio: document.getElementById('o-inicio').value,
-    prazo: document.getElementById('o-prazo').value,
+    custo_estimado: total * (pctCusto/100),
+    margem_estimada: total * (1 - pctCusto/100),
+    pct_custo: pctCusto,
+    inicio: document.getElementById('o-inicio').value || null,
+    prazo: document.getElementById('o-prazo').value || null,
     obs: document.getElementById('o-obs').value,
-    status: 'ativa',
-    criadaEm: new Date().toISOString()
+    status: 'ativa'
   };
 
-  state.obras.push(obra);
-  saveState();
+  const saved = await saveObra(obra);
+  if (!saved) return;
+  state.obras.push(saved);
   fecharModal('modal-obra');
   renderObras();
   showToast('✅ Obra cadastrada com sucesso!');
@@ -779,14 +794,14 @@ function verDetalheObra(id) {
   const recebido = getRecebidoObra(id);
   const gasto = getGastoObra(id);
   const saldo = getSaldoObra(id);
-  const txns = state.transacoes.filter(t => t.obraId === id).sort((a,b) => new Date(b.data)-new Date(a.data));
+  const txns = state.transacoes.filter(t => t.obra_id === id).sort((a,b) => new Date(b.data)-new Date(a.data));
 
   document.getElementById('d-titulo').textContent = o.nome;
 
   const alertaStr = saldo < 0
     ? `<div class="alert alert-danger"><span class="alert-icon">🚨</span><span>Saldo negativo — as saídas superaram as entradas desta obra!</span></div>`
-    : gasto > o.custoEstimado * 0.85
-    ? `<div class="alert alert-warn"><span class="alert-icon">⚠️</span><span>Custo em ${((gasto/o.custoEstimado)*100).toFixed(0)}% do estimado — atenção com os próximos gastos.</span></div>`
+    : gasto > o.custo_estimado * 0.85
+    ? `<div class="alert alert-warn"><span class="alert-icon">⚠️</span><span>Custo em ${((gasto/o.custo_estimado)*100).toFixed(0)}% do estimado — atenção com os próximos gastos.</span></div>`
     : `<div class="alert alert-ok"><span class="alert-icon">✅</span><span>Obra dentro do orçamento.</span></div>`;
 
   document.getElementById('d-content').innerHTML = `
@@ -796,8 +811,8 @@ function verDetalheObra(id) {
       <div class="stat-box"><div class="stat-val text-green">${fmt(recebido)}</div><div class="stat-label">Recebido</div></div>
       <div class="stat-box"><div class="stat-val text-red">${fmt(gasto)}</div><div class="stat-label">Gasto</div></div>
       <div class="stat-box"><div class="stat-val ${saldo<0?'text-red':'text-gold'}">${fmt(saldo)}</div><div class="stat-label">Saldo</div></div>
-      <div class="stat-box"><div class="stat-val">${fmt(o.custoEstimado)}</div><div class="stat-label">Custo Estim.</div></div>
-      <div class="stat-box"><div class="stat-val">${fmt(o.margemEstimada)}</div><div class="stat-label">Margem Estim.</div></div>
+      <div class="stat-box"><div class="stat-val">${fmt(o.custo_estimado)}</div><div class="stat-label">Custo Estim.</div></div>
+      <div class="stat-box"><div class="stat-val">${fmt(o.margem_estimada)}</div><div class="stat-label">Margem Estim.</div></div>
     </div>
     <div class="divider"></div>
     <div class="flex-between" style="margin-bottom:10px">
@@ -826,16 +841,18 @@ function verDetalheObra(id) {
   document.getElementById('modal-detalhe').classList.add('open');
 }
 
-function concluirObra(id) {
+async function concluirObra(id) {
+  await updateObra(id, { status: 'concluida' });
   const o = state.obras.find(x => x.id === id);
-  if (o) { o.status = 'concluida'; saveState(); fecharModal('modal-detalhe'); renderObras(); showToast('🎉 Obra concluída!'); }
+  if (o) { o.status = 'concluida'; fecharModal('modal-detalhe'); renderObras(); showToast('🎉 Obra concluída!'); }
 }
 
-function excluirObra(id) {
+async function excluirObra(id) {
   if (!confirm('Excluir esta obra e todas as suas movimentações?')) return;
+  await deleteObra(id);
   state.obras = state.obras.filter(o => o.id !== id);
-  state.transacoes = state.transacoes.filter(t => t.obraId !== id);
-  saveState(); fecharModal('modal-detalhe'); renderObras(); showToast('Obra excluída.');
+  state.transacoes = state.transacoes.filter(t => t.obra_id !== id);
+  fecharModal('modal-detalhe'); renderObras(); showToast('Obra excluída.');
 }
 
 // =================== LANÇAMENTO ===================
@@ -884,9 +901,11 @@ function forcarLancamento() {
   confirmarLancamento(tipo, obraId, valor, data, categoria, descricao);
 }
 
-function confirmarLancamento(tipo, obraId, valor, data, categoria, descricao) {
-  state.transacoes.push({ id: state.nextTxnId++, tipo, obraId, valor, data, categoria, descricao, criadoEm: new Date().toISOString() });
-  saveState();
+async function confirmarLancamento(tipo, obraId, valor, data, categoria, descricao) {
+  const txn = { tipo, obra_id: obraId, valor, data, categoria, descricao };
+  const saved = await saveTransacao(txn);
+  if (!saved) return;
+  state.transacoes.unshift(saved);
   document.getElementById('f-valor').value = '';
   document.getElementById('f-descricao').value = '';
   document.getElementById('aviso-lancamento').style.display = 'none';
@@ -959,9 +978,13 @@ function showToast(msg) {
 }
 
 // =================== INIT ===================
-loadState();
-updateHeader();
-renderPainel();
+async function init() {
+  showToast('⏳ Carregando dados...');
+  await loadState();
+  updateHeader();
+  renderPainel();
+}
+init();
 </script>
 </body>
 </html>
