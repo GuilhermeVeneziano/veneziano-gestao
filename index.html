@@ -942,6 +942,16 @@
         <div class="sec-title" style="margin:0">Obras</div>
         <button class="btn btn-primary btn-sm" id="btn-nova-obra" onclick="abrirModalObra()">+ Nova Obra</button>
       </div>
+      <!-- FASE 2.2 OBRAS INÍCIO — busca por texto -->
+      <div style="margin-bottom:10px;position:relative">
+        <input class="form-input" type="text" id="busca-obra"
+          placeholder="Buscar por obra, cliente ou status..."
+          oninput="renderObras()"
+          style="padding-left:36px">
+        <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:14px">🔍</span>
+      </div>
+      <!-- FASE 2.2 OBRAS FIM — busca por texto -->
+
       <!-- Filtro status -->
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px">
         <button class="btn btn-ghost btn-sm obra-filtro active-filtro" id="filtro-todas" onclick="filtrarObras('todas')">Todas</button>
@@ -1500,11 +1510,50 @@ function statusBadge(status){
   const parts = (STATUS_COLOR[s]||'rgba(150,150,150,0.15)|#999').split('|');
   return `<span style="font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px;background:${parts[0]};color:${parts[1]}">${STATUS_LABEL[s]||s}</span>`;
 }
+<div class="form-group">
+        <div class="form-label">Nome / Identificação da Obra *</div>
+        <input class="form-input" type="text" id="o-nome" placeholder="Ex: Residência Silva — Jd. Paulista">
+      </div>
+
+      <!-- FASE 2.2 OBRAS INÍCIO — endereço da obra -->
+      <div class="form-row col2">
+        <div class="form-group">
+          <div class="form-label">CEP</div>
+          <input class="form-input" type="text" id="o-cep" placeholder="17000-000"
+            maxlength="9" oninput="mascaraCEP(this)" onblur="buscarCEPObra(this.value)">
+        </div>
+        <div class="form-group">
+          <div class="form-label">Número</div>
+          <input class="form-input" type="text" id="o-numero" placeholder="123">
+        </div>
+      </div>
+      <div class="form-group">
+        <div class="form-label">Endereço (Rua / Avenida)</div>
+        <input class="form-input" type="text" id="o-endereco-obra" placeholder="Rua, Avenida...">
+      </div>
+      <div class="form-row col2">
+        <div class="form-group">
+          <div class="form-label">Bairro</div>
+          <input class="form-input" type="text" id="o-bairro" placeholder="Bairro">
+        </div>
+        <div class="form-group">
+          <div class="form-label">Cidade</div>
+          <input class="form-input" type="te// FASE 2.2 OBRAS INÍCIO — renderObras com busca por texto
 function renderObras(){
-  const el=document.getElementById('obras-list');
+  const el = document.getElementById('obras-list');
+  if(!el) return;
+  const busca = (document.getElementById('busca-obra')?.value||'').toLowerCase().trim();
   let lista = state.obras;
   if(_filtroObra !== 'todas') lista = lista.filter(o => (o.status||'orcamento') === _filtroObra);
-  if(!lista.length){
+  if(busca) lista = lista.filter(o =>
+    (o.nome||'').toLowerCase().includes(busca) ||
+    (o.cliente||'').toLowerCase().includes(busca) ||
+    (STATUS_LABEL[o.status]||'').toLowerCase().includes(busca)
+  );
+  if(!lista.length){xt" id="o-cidade-obra" placeholder="Bauru">
+        </div>
+      </div>
+      <!-- FASE 2.2 OBRAS FIM — endereço da obra -->
     el.innerHTML='<div class="text-muted" style="font-size:13px;padding:30px 0;text-align:center">Nenhuma obra'+(_filtroObra!=='todas'?' com status "'+STATUS_LABEL[_filtroObra]+'"':'')+' cadastrada.</div>';
     return;
   }
@@ -1701,6 +1750,99 @@ async function alterarStatusObra(id, novoStatus){
 
 async function concluirObra(id){await updateObra(id,{status:'concluida'});const o=state.obras.find(x=>x.id===id);if(o){o.status='concluida';fecharModal('modal-detalhe');renderObras();showToast('🎉 Obra concluída!');}}
 async function excluirObra(id){if(!confirm('Excluir esta obra?'))return;await deleteObra(id);state.obras=state.obras.filter(o=>o.id!==id);state.transacoes=state.transacoes.filter(t=>t.obra_id!==id);fecharModal('modal-detalhe');renderObras();showToast('Obra excluída.');}
+
+// FASE 2.2 OBRAS INÍCIO — excluir seguro + CEP obra
+function confirmarExcluirObra(id, nome){
+  if(!can('excluir')){ showToast('Sem permissão.'); return; }
+  if(!confirm('Excluir obra "'+nome+'"?\nAs movimentações vinculadas serão desvinculadas.')) return;
+  excluirObraConfirmado(id);
+}
+async function excluirObraConfirmado(id){
+  const {error} = await sb.from('obras').delete().eq('id',id).eq('empresa_id',currentEmpresaId);
+  if(error){ showToast('Erro: '+error.message); return; }
+  state.obras = state.obras.filter(o => o.id !== id);
+  state.transacoes = state.transacoes.filter(t => t.obra_id !== id);
+  fecharModal('modal-detalhe');
+  renderObras(); renderPainel();
+  showToast('Obra excluída.');
+}
+async function buscarCEPObra(cep){
+  const digits = (cep||'').replace(/\D/g,'');
+  if(digits.length !== 8) return;
+  try {
+    const r = await fetch('https://viacep.com.br/ws/'+digits+'/json/');
+    const d = await r.json();
+    if(!d.erro){
+      document.getElementById('o-endereco-obra').value = d.logradouro || '';
+      document.getElementById('o-bairro').value        = d.bairro     || '';
+      document.getElementById('o-cidade-obra').value   = d.localidade || 'Bauru';
+      document.getElementById('o-numero').focus();
+    }
+  } catch(e){}
+}
+// FASE 2.2 OBRAS FIM — excluir seguro + CEP obra
+
+// FASE 2.2 OBRAS INÍCIO — excluir seguro + CEP obra
+function confirmarExcluirObra(id, nome){
+  if(!can('excluir')){ showToast('Sem permissão.'); return; }
+  if(!confirm('Excluir obra "'+nome+'"?\nAs movimentações vinculadas serão desvinculadas.')) return;
+  excluirObraConfirmado(id);
+}
+async function excluirObraConfirmado(id){
+  const {error} = await sb.from('obras').delete().eq('id',id).eq('empresa_id',currentEmpresaId);
+  if(error){ showToast('Erro: '+error.message); return; }
+  state.obras = state.obras.filter(o => o.id !== id);
+  state.transacoes = state.transacoes.filter(t => t.obra_id !== id);
+  fecharModal('modal-detalhe');
+  renderObras(); renderPainel();
+  showToast('Obra excluída.');
+}
+async function buscarCEPObra(cep){
+  const digits = (cep||'').replace(/\D/g,'');
+  if(digits.length !== 8) return;
+  try {
+    const r = await fetch('https://viacep.com.br/ws/'+digits+'/json/');
+    const d = await r.json();
+    if(!d.erro){
+      document.getElementById('o-endereco-obra').value = d.logradouro || '';
+      document.getElementById('o-bairro').value        = d.bairro     || '';
+      document.getElementById('o-cidade-obra').value   = d.localidade || 'Bauru';
+      document.getElementById('o-numero').focus();
+    }
+  } catch(e){}
+}
+// FASE 2.2 OBRAS FIM — excluir seguro + CEP obra
+
+// FASE 2.2 OBRAS INÍCIO — excluir seguro + CEP obra
+function confirmarExcluirObra(id, nome){
+  if(!can('excluir')){ showToast('Sem permissão.'); return; }
+  if(!confirm('Excluir obra "'+nome+'"?\nAs movimentações vinculadas serão desvinculadas.')) return;
+  excluirObraConfirmado(id);
+}
+async function excluirObraConfirmado(id){
+  const {error} = await sb.from('obras').delete().eq('id',id).eq('empresa_id',currentEmpresaId);
+  if(error){ showToast('Erro: '+error.message); return; }
+  state.obras = state.obras.filter(o => o.id !== id);
+  state.transacoes = state.transacoes.filter(t => t.obra_id !== id);
+  fecharModal('modal-detalhe');
+  renderObras(); renderPainel();
+  showToast('Obra excluída.');
+}
+async function buscarCEPObra(cep){
+  const digits = (cep||'').replace(/\D/g,'');
+  if(digits.length !== 8) return;
+  try {
+    const r = await fetch('https://viacep.com.br/ws/'+digits+'/json/');
+    const d = await r.json();
+    if(!d.erro){
+      document.getElementById('o-endereco-obra').value = d.logradouro || '';
+      document.getElementById('o-bairro').value        = d.bairro     || '';
+      document.getElementById('o-cidade-obra').value   = d.localidade || 'Bauru';
+      document.getElementById('o-numero').focus();
+    }
+  } catch(e){}
+}
+// FASE 2.2 OBRAS FIM — excluir seguro + CEP obra
 
 function populateObraSelect(){const sel=document.getElementById('f-obra');sel.innerHTML='<option value="">— Selecione a obra —</option>';state.obras.filter(o=>o.status==='ativa').forEach(o=>{sel.innerHTML+=`<option value="${o.id}">${o.nome} (${o.cliente})</option>`;});document.getElementById('f-data').value=new Date().toISOString().split('T')[0];}
 
