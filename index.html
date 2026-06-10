@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Átrio · Gestão</title>
+<title>Gestão · Veneziano</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
 
@@ -12,75 +13,152 @@
     --surface: #161616;
     --surface2: #1e1e1e;
     --border: #2a2a2a;
-    --accent: #C8A96E;
-    --accent2: #8B6914;
-    --green: #2ecc71;
-    --red: #e74c3c;
-    --yellow: #f39c12;
     --text: #f0ede8;
     --text2: #999;
     --text3: #555;
+    --green: #2ecc71;
+    --red: #e74c3c;
+    --yellow: #f39c12;
     --radius: 10px;
     --font-display: 'Space Grotesk', sans-serif;
     --font-body: 'Inter', sans-serif;
+    --veneziano: #e8e8e8;
+    --veneziano-dim: rgba(232,232,232,0.12);
+    --atrio: #2563EB;
+    --atrio-dim: rgba(37,99,235,0.15);
+    --zehn: #F97316;
+    --zehn-dim: rgba(249,115,22,0.15);
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: var(--font-body);
-    font-size: 14px;
-    min-height: 100vh;
-  }
+  body { background: var(--bg); color: var(--text); font-family: var(--font-body); font-size: 14px; min-height: 100vh; }
 
-  /* LAYOUT */
-  .app { display: flex; flex-direction: column; min-height: 100vh; max-width: 900px; margin: 0 auto; padding: 0 16px; }
+  /* LOGIN */
+  #screen-login { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 24px 16px; }
+  .login-box { width: 100%; max-width: 380px; }
+  .login-brand { text-align: center; margin-bottom: 32px; }
+  .login-logo { font-family: var(--font-display); font-size: 28px; font-weight: 700; letter-spacing: -1px; }
+  .login-tagline { font-size: 12px; color: var(--text3); margin-top: 6px; text-transform: uppercase; letter-spacing: 0.1em; }
+  .login-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 28px 24px; }
+  .login-title { font-family: var(--font-display); font-size: 17px; font-weight: 600; margin-bottom: 20px; }
+  .login-error { background: rgba(231,76,60,0.1); border: 1px solid rgba(231,76,60,0.25); color: var(--red); padding: 10px 12px; border-radius: 8px; font-size: 13px; margin-bottom: 14px; display: none; }
+  .forgot-link { text-align: center; margin-top: 14px; font-size: 12px; color: var(--text3); }
+  .forgot-link a { color: var(--text2); text-decoration: none; cursor: pointer; }
+  .forgot-link a:hover { color: var(--text); }
 
-  /* HEADER */
-  .header {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 20px 0 16px;
-    border-bottom: 1px solid var(--border);
-    margin-bottom: 20px;
+  /* FORM */
+  .form-group { margin-bottom: 14px; }
+  .form-label { display: block; font-size: 11px; color: var(--text2); margin-bottom: 6px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.04em; }
+  .form-input, .form-select, .form-textarea {
+    width: 100%; background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 8px; padding: 10px 12px; color: var(--text);
+    font-family: var(--font-body); font-size: 14px; transition: border-color 0.15s; -webkit-appearance: none;
   }
-  .logo { font-family: var(--font-display); font-size: 20px; font-weight: 700; letter-spacing: -0.5px; }
-  .logo span { color: var(--accent); }
-  .header-sub { font-size: 11px; color: var(--text3); margin-top: 2px; }
+  .form-input:focus, .form-select:focus, .form-textarea:focus { outline: none; border-color: var(--atrio); }
+  .form-textarea { resize: vertical; min-height: 70px; }
+  .form-row { display: grid; gap: 12px; }
+  .form-row.col2 { grid-template-columns: 1fr 1fr; }
+  .form-row.col3 { grid-template-columns: 1fr 1fr 1fr; }
+  .toggle-group { display: flex; flex-wrap: wrap; gap: 6px; }
+  .toggle-group input[type=radio], .toggle-group input[type=checkbox] { display: none; }
+  .toggle-group label { padding: 6px 12px; font-size: 12px; font-weight: 500; border: 1px solid var(--border); border-radius: 20px; cursor: pointer; color: var(--text2); transition: all 0.15s; }
+
+  /* BUTTONS */
+  .btn { padding: 11px 20px; border: none; border-radius: 8px; font-family: var(--font-body); font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s; width: 100%; }
+  .btn-primary { background: var(--atrio); color: #fff; }
+  .btn-primary:hover { background: #1d4ed8; }
+  .btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--text2); }
+  .btn-ghost:hover { border-color: var(--text); color: var(--text); }
+  .btn-sm { padding: 6px 12px; font-size: 12px; width: auto; }
+  .btn-danger { background: rgba(231,76,60,0.15); color: var(--red); border: 1px solid rgba(231,76,60,0.3); }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  /* HOME */
+  #screen-home { display: none; min-height: 100vh; }
+  .home-header { display: flex; align-items: center; justify-content: space-between; padding: 20px 20px 16px; border-bottom: 1px solid var(--border); }
+  .home-logo { font-family: var(--font-display); font-size: 18px; font-weight: 700; letter-spacing: -0.5px; }
+  .home-user { display: flex; align-items: center; gap: 10px; }
+  .user-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--surface2); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; flex-shrink: 0; }
+  .user-info { text-align: right; }
+  .user-name { font-size: 13px; font-weight: 500; }
+  .user-role { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; margin-top: 1px; }
+  .home-body { padding: 28px 20px; max-width: 900px; margin: 0 auto; }
+  .home-greeting { margin-bottom: 28px; }
+  .home-greeting h2 { font-family: var(--font-display); font-size: 22px; font-weight: 700; letter-spacing: -0.5px; }
+  .home-greeting p { font-size: 13px; color: var(--text2); margin-top: 4px; }
+  .home-section-title { font-size: 11px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 14px; }
+
+  /* EMPRESA GRID */
+  .empresa-grid { display: grid; grid-template-columns: 1fr; gap: 14px; margin-bottom: 32px; }
+  @media (min-width: 600px) { .empresa-grid { grid-template-columns: repeat(3, 1fr); } }
+  .empresa-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 20px; cursor: pointer; transition: all 0.2s; }
+  .empresa-card:hover { transform: translateY(-2px); }
+  .empresa-card.veneziano { border-top: 3px solid var(--veneziano); }
+  .empresa-card.atrio     { border-top: 3px solid var(--atrio); }
+  .empresa-card.zehn      { border-top: 3px solid var(--zehn); }
+  .empresa-card.veneziano:hover { box-shadow: 0 8px 24px rgba(232,232,232,0.06); }
+  .empresa-card.atrio:hover     { box-shadow: 0 8px 24px rgba(37,99,235,0.12); }
+  .empresa-card.zehn:hover      { box-shadow: 0 8px 24px rgba(249,115,22,0.12); }
+  .empresa-dot { width: 10px; height: 10px; border-radius: 50%; margin-bottom: 14px; }
+  .veneziano .empresa-dot { background: var(--veneziano); }
+  .atrio .empresa-dot     { background: var(--atrio); }
+  .zehn .empresa-dot      { background: var(--zehn); }
+  .empresa-nome { font-family: var(--font-display); font-size: 17px; font-weight: 700; margin-bottom: 4px; }
+  .empresa-tipo { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 16px; }
+  .empresa-stat { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); }
+  .empresa-stat-val { font-family: var(--font-display); font-size: 15px; font-weight: 700; }
+  .empresa-stat-label { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.04em; margin-top: 2px; }
+  .empresa-badge { font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 20px; }
+  .veneziano .empresa-badge { background: var(--veneziano-dim); color: var(--veneziano); }
+  .atrio .empresa-badge     { background: var(--atrio-dim);     color: var(--atrio); }
+  .zehn .empresa-badge      { background: var(--zehn-dim);      color: var(--zehn); }
+
+  /* QUICK */
+  .quick-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 24px; }
+  @media (min-width: 480px) { .quick-grid { grid-template-columns: repeat(4, 1fr); } }
+  .quick-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px; cursor: pointer; transition: all 0.15s; text-align: center; }
+  .quick-card:hover { border-color: var(--text3); }
+  .quick-icon { font-size: 20px; margin-bottom: 6px; }
+  .quick-label { font-size: 12px; font-weight: 500; color: var(--text2); }
+
+  /* APP SCREEN */
+  #screen-app { display: none; }
+  .app-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: var(--bg); z-index: 50; }
+  .app-header-left { display: flex; align-items: center; gap: 10px; }
+  .back-btn { background: none; border: none; color: var(--text2); cursor: pointer; font-size: 18px; padding: 2px 6px; line-height: 1; border-radius: 6px; transition: all 0.1s; }
+  .back-btn:hover { background: var(--surface2); color: var(--text); }
+  .app-logo { font-family: var(--font-display); font-size: 17px; font-weight: 700; }
+  .app-logo.veneziano { color: var(--veneziano); }
+  .app-logo.atrio     { color: var(--atrio); }
+  .app-logo.zehn      { color: var(--zehn); }
+  .app-header-sub { font-size: 11px; color: var(--text3); margin-top: 1px; }
+  .app-body { max-width: 900px; margin: 0 auto; padding: 0 16px 40px; }
 
   /* TABS */
-  .tabs { display: flex; gap: 4px; background: var(--surface); padding: 4px; border-radius: var(--radius); margin-bottom: 20px; }
-  .tab {
-    flex: 1; padding: 8px 10px; border: none; background: transparent;
-    color: var(--text2); font-family: var(--font-body); font-size: 13px; font-weight: 500;
-    border-radius: 7px; cursor: pointer; transition: all 0.15s;
-    white-space: nowrap;
-  }
-  .tab.active { background: var(--accent); color: #0d0d0d; font-weight: 600; }
-  .tab:hover:not(.active) { background: var(--surface2); color: var(--text); }
+  .tabs { display: flex; gap: 4px; background: var(--surface); padding: 4px; border-radius: var(--radius); margin: 16px 0 20px; overflow-x: auto; }
+  .tab { flex: 1; min-width: fit-content; padding: 8px 10px; border: none; background: transparent; color: var(--text2); font-family: var(--font-body); font-size: 13px; font-weight: 500; border-radius: 7px; cursor: pointer; transition: all 0.15s; white-space: nowrap; }
+  .tab.active-veneziano { background: var(--veneziano); color: #0d0d0d; font-weight: 600; }
+  .tab.active-atrio     { background: var(--atrio);     color: #fff;    font-weight: 600; }
+  .tab.active-zehn      { background: var(--zehn);      color: #fff;    font-weight: 600; }
+  .tab:hover:not([class*="active"]) { background: var(--surface2); color: var(--text); }
 
-  /* SECTIONS */
   .section { display: none; }
   .section.active { display: block; }
 
   /* CARDS */
-  .card {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: var(--radius); padding: 16px; margin-bottom: 12px;
-  }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; margin-bottom: 12px; }
   .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
   .card-title { font-family: var(--font-display); font-size: 15px; font-weight: 600; }
   .card-sub { font-size: 11px; color: var(--text3); margin-top: 2px; }
 
   /* BADGES */
-  .badge {
-    display: inline-block; font-size: 11px; font-weight: 600; padding: 3px 8px;
-    border-radius: 20px; letter-spacing: 0.03em;
-  }
+  .badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 20px; letter-spacing: 0.03em; }
   .badge-green { background: rgba(46,204,113,0.15); color: var(--green); }
   .badge-yellow { background: rgba(243,156,18,0.15); color: var(--yellow); }
   .badge-red { background: rgba(231,76,60,0.15); color: var(--red); }
-  .badge-gold { background: rgba(200,169,110,0.15); color: var(--accent); }
+  .badge-veneziano { background: var(--veneziano-dim); color: var(--veneziano); }
+  .badge-atrio { background: var(--atrio-dim); color: var(--atrio); }
+  .badge-zehn { background: var(--zehn-dim); color: var(--zehn); }
 
   /* PROGRESS */
   .progress-wrap { margin: 10px 0 4px; }
@@ -90,70 +168,23 @@
   .fill-green { background: var(--green); }
   .fill-yellow { background: var(--yellow); }
   .fill-red { background: var(--red); }
-  .fill-gold { background: var(--accent); }
 
-  /* GRID STATS */
+  /* STATS */
   .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px; }
   .stat-box { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px; text-align: center; }
   .stat-val { font-family: var(--font-display); font-size: 18px; font-weight: 700; }
   .stat-label { font-size: 10px; color: var(--text2); margin-top: 3px; text-transform: uppercase; letter-spacing: 0.05em; }
 
-  /* FORM */
-  .form-group { margin-bottom: 14px; }
-  .form-label { display: block; font-size: 12px; color: var(--text2); margin-bottom: 6px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.04em; }
-  .form-input, .form-select, .form-textarea {
-    width: 100%; background: var(--surface2); border: 1px solid var(--border);
-    border-radius: 8px; padding: 10px 12px; color: var(--text);
-    font-family: var(--font-body); font-size: 14px;
-    transition: border-color 0.15s;
-    -webkit-appearance: none;
-  }
-  .form-input:focus, .form-select:focus, .form-textarea:focus {
-    outline: none; border-color: var(--accent);
-  }
-  .form-textarea { resize: vertical; min-height: 70px; }
-  .form-row { display: grid; gap: 12px; }
-  .form-row.col2 { grid-template-columns: 1fr 1fr; }
-  .form-row.col3 { grid-template-columns: 1fr 1fr 1fr; }
-
-  /* TOGGLE GROUP */
-  .toggle-group { display: flex; flex-wrap: wrap; gap: 6px; }
-  .toggle-group input[type=radio], .toggle-group input[type=checkbox] { display: none; }
-  .toggle-group label {
-    padding: 6px 12px; font-size: 12px; font-weight: 500;
-    border: 1px solid var(--border); border-radius: 20px; cursor: pointer;
-    color: var(--text2); transition: all 0.15s;
-  }
-  .toggle-group input:checked + label {
-    background: var(--accent); color: #0d0d0d; border-color: var(--accent); font-weight: 600;
-  }
-
-  /* BUTTONS */
-  .btn {
-    padding: 11px 20px; border: none; border-radius: 8px; font-family: var(--font-body);
-    font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s; width: 100%;
-  }
-  .btn-primary { background: var(--accent); color: #0d0d0d; }
-  .btn-primary:hover { background: #d4b87e; }
-  .btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--text2); }
-  .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
-  .btn-sm { padding: 6px 12px; font-size: 12px; width: auto; }
-  .btn-danger { background: rgba(231,76,60,0.15); color: var(--red); border: 1px solid rgba(231,76,60,0.3); }
-
-  /* SECTION TITLE */
-  .sec-title { font-family: var(--font-display); font-size: 13px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 12px; margin-top: 4px; }
-
-  /* DIVIDER */
-  .divider { height: 1px; background: var(--border); margin: 16px 0; }
+  /* SUMMARY BAR */
+  .summary-bar { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 16px; display: flex; overflow-x: auto; }
+  .sb-item { flex: 1; min-width: 80px; text-align: center; padding: 0 8px; }
+  .sb-item + .sb-item { border-left: 1px solid var(--border); }
+  .sb-val { font-family: var(--font-display); font-size: 16px; font-weight: 700; }
+  .sb-label { font-size: 10px; color: var(--text2); margin-top: 3px; text-transform: uppercase; letter-spacing: 0.04em; }
 
   /* CONTRACT ITEM */
-  .contract-item {
-    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
-    padding: 14px 16px; margin-bottom: 10px; cursor: pointer;
-    transition: border-color 0.15s;
-  }
-  .contract-item:hover { border-color: var(--accent); }
-  .contract-item.selected { border-color: var(--accent); background: rgba(200,169,110,0.05); }
+  .contract-item { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 10px; cursor: pointer; transition: border-color 0.15s; }
+  .contract-item:hover { border-color: var(--text3); }
   .ci-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
   .ci-name { font-weight: 600; font-size: 15px; }
   .ci-client { font-size: 12px; color: var(--text2); margin-top: 2px; }
@@ -162,33 +193,27 @@
   .ci-amount-label { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.04em; }
   .ci-amount-val { font-family: var(--font-display); font-size: 14px; font-weight: 600; margin-top: 2px; }
 
-  /* ALERT */
-  .alert {
-    padding: 12px 14px; border-radius: 8px; margin-bottom: 12px;
-    font-size: 13px; display: flex; align-items: flex-start; gap: 10px;
-  }
+  /* ALERTS */
+  .alert { padding: 12px 14px; border-radius: 8px; margin-bottom: 12px; font-size: 13px; display: flex; align-items: flex-start; gap: 10px; }
   .alert-warn { background: rgba(243,156,18,0.1); border: 1px solid rgba(243,156,18,0.25); color: #f5c842; }
   .alert-ok { background: rgba(46,204,113,0.1); border: 1px solid rgba(46,204,113,0.25); color: var(--green); }
   .alert-danger { background: rgba(231,76,60,0.1); border: 1px solid rgba(231,76,60,0.25); color: var(--red); }
   .alert-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
 
+  /* REGRA */
+  .regra-box { background: var(--surface2); border-left: 3px solid var(--atrio); border-radius: 0 8px 8px 0; padding: 12px 14px; margin-bottom: 10px; }
+  .regra-title { font-weight: 600; font-size: 13px; margin-bottom: 4px; }
+  .regra-desc { font-size: 12px; color: var(--text2); line-height: 1.5; }
+
   /* MODAL */
-  .modal-overlay {
-    display: none; position: fixed; inset: 0;
-    background: rgba(0,0,0,0.8); z-index: 100;
-    align-items: center; justify-content: center; padding: 16px;
-  }
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 100; align-items: center; justify-content: center; padding: 16px; }
   .modal-overlay.open { display: flex; }
-  .modal {
-    background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
-    width: 100%; max-width: 560px; max-height: 90vh; overflow-y: auto;
-    padding: 20px;
-  }
+  .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; width: 100%; max-width: 560px; max-height: 90vh; overflow-y: auto; padding: 20px; }
   .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
   .modal-title { font-family: var(--font-display); font-size: 17px; font-weight: 700; }
   .modal-close { background: none; border: none; color: var(--text2); font-size: 20px; cursor: pointer; padding: 0 4px; }
 
-  /* TRANSACTION LIST */
+  /* TRANSACTION */
   .txn-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); }
   .txn-item:last-child { border-bottom: none; }
   .txn-desc { font-size: 13px; }
@@ -197,43 +222,38 @@
   .txn-val.income { color: var(--green); }
   .txn-val.expense { color: var(--red); }
 
-  /* SUMMARY BAR */
-  .summary-bar {
-    background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius);
-    padding: 14px 16px; margin-bottom: 16px;
-    display: flex; gap: 0; overflow-x: auto;
-  }
-  .sb-item { flex: 1; min-width: 80px; text-align: center; padding: 0 8px; }
-  .sb-item + .sb-item { border-left: 1px solid var(--border); }
-  .sb-val { font-family: var(--font-display); font-size: 16px; font-weight: 700; }
-  .sb-label { font-size: 10px; color: var(--text2); margin-top: 3px; text-transform: uppercase; letter-spacing: 0.04em; }
-
-  /* REGRA BOX */
-  .regra-box {
-    background: var(--surface2); border-left: 3px solid var(--accent);
-    border-radius: 0 8px 8px 0; padding: 12px 14px; margin-bottom: 10px;
-  }
-  .regra-title { font-weight: 600; font-size: 13px; margin-bottom: 4px; }
-  .regra-desc { font-size: 12px; color: var(--text2); line-height: 1.5; }
+  /* PROFILE */
+  .profile-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+  .profile-item:last-child { border-bottom: none; }
+  .profile-label { color: var(--text2); }
+  .profile-val { font-weight: 500; }
+  .role-badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 20px; }
+  .role-adm { background: rgba(249,115,22,0.15); color: var(--zehn); }
+  .role-gerente { background: rgba(37,99,235,0.15); color: var(--atrio); }
+  .role-operador { background: rgba(46,204,113,0.15); color: var(--green); }
+  .role-visualizador { background: rgba(153,153,153,0.15); color: var(--text2); }
 
   /* TOAST */
-  .toast {
-    position: fixed; bottom: 20px; right: 20px; left: 20px; max-width: 400px; margin: 0 auto;
-    background: var(--accent); color: #0d0d0d; padding: 12px 16px; border-radius: 10px;
-    font-weight: 600; font-size: 13px; z-index: 200;
-    transform: translateY(80px); opacity: 0; transition: all 0.3s;
-  }
+  .toast { position: fixed; bottom: 20px; right: 20px; left: 20px; max-width: 400px; margin: 0 auto; background: var(--surface); border: 1px solid var(--border); color: var(--text); padding: 12px 16px; border-radius: 10px; font-weight: 500; font-size: 13px; z-index: 200; transform: translateY(80px); opacity: 0; transition: all 0.3s; }
   .toast.show { transform: translateY(0); opacity: 1; }
 
   /* UTILS */
   .text-green { color: var(--green); }
   .text-red { color: var(--red); }
-  .text-gold { color: var(--accent); }
   .text-muted { color: var(--text2); }
+  .sec-title { font-family: var(--font-display); font-size: 13px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 12px; margin-top: 4px; }
+  .divider { height: 1px; background: var(--border); margin: 16px 0; }
   .mt8 { margin-top: 8px; }
   .mt16 { margin-top: 16px; }
   .flex-between { display: flex; justify-content: space-between; align-items: center; }
   .flex-gap { display: flex; gap: 8px; }
+
+  /* LOADING */
+  #loading-overlay { display: flex; position: fixed; inset: 0; background: var(--bg); align-items: center; justify-content: center; z-index: 999; flex-direction: column; gap: 12px; }
+  #loading-overlay.hidden { display: none; }
+  .loading-logo { font-family: var(--font-display); font-size: 22px; font-weight: 700; letter-spacing: -0.5px; }
+  .loading-spinner { width: 20px; height: 20px; border: 2px solid var(--border); border-top-color: var(--atrio); border-radius: 50%; animation: spin 0.7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
 
   @media (max-width: 480px) {
     .stats-grid { grid-template-columns: repeat(2, 1fr); }
@@ -244,188 +264,234 @@
 </style>
 </head>
 <body>
-<div class="app">
 
-  <!-- HEADER -->
-  <div class="header">
-    <div>
-      <div class="logo"><span>Átrio</span> · Gestão</div>
-      <div class="header-sub" id="headerDate">carregando...</div>
+<div id="loading-overlay">
+  <div class="loading-logo">Veneziano</div>
+  <div class="loading-spinner"></div>
+</div>
+
+<!-- LOGIN -->
+<div id="screen-login">
+  <div class="login-box">
+    <div class="login-brand">
+      <div class="login-logo">Veneziano</div>
+      <div class="login-tagline">Sistema de Gestão</div>
     </div>
-    <div style="text-align:right">
-      <div class="badge badge-gold" id="mesLabel">Jun 2025</div>
-    </div>
-  </div>
-
-  <!-- TABS -->
-  <div class="tabs">
-    <button class="tab active" onclick="switchTab('painel')">📊 Painel</button>
-    <button class="tab" onclick="switchTab('obras')">🏗 Obras</button>
-    <button class="tab" onclick="switchTab('lancamento')">＋ Lançar</button>
-    <button class="tab" onclick="switchTab('regras')">🛡 Regras</button>
-  </div>
-
-  <!-- ===================== PAINEL ===================== -->
-  <div class="section active" id="sec-painel">
-
-    <div class="summary-bar">
-      <div class="sb-item">
-        <div class="sb-val text-green" id="sb-entrada">R$0</div>
-        <div class="sb-label">Entradas</div>
-      </div>
-      <div class="sb-item">
-        <div class="sb-val text-red" id="sb-saida">R$0</div>
-        <div class="sb-label">Saídas</div>
-      </div>
-      <div class="sb-item">
-        <div class="sb-val text-gold" id="sb-saldo">R$0</div>
-        <div class="sb-label">Saldo Livre</div>
-      </div>
-      <div class="sb-item">
-        <div class="sb-val" id="sb-obras">0</div>
-        <div class="sb-label">Obras Ativas</div>
-      </div>
-    </div>
-
-    <div id="alertas-container"></div>
-
-    <div class="sec-title">Obras em Andamento</div>
-    <div id="obras-painel-list">
-      <div class="text-muted" style="font-size:13px;padding:20px 0;text-align:center">Nenhuma obra cadastrada ainda.<br>Vá em <strong>Obras → Nova Obra</strong> para começar.</div>
-    </div>
-
-    <div class="divider"></div>
-    <div class="sec-title">Últimas Movimentações</div>
-    <div id="txn-list">
-      <div class="text-muted" style="font-size:13px;padding:16px 0;text-align:center">Nenhuma movimentação ainda.</div>
-    </div>
-
-  </div>
-
-  <!-- ===================== OBRAS ===================== -->
-  <div class="section" id="sec-obras">
-
-    <div class="flex-between" style="margin-bottom:16px">
-      <div class="sec-title" style="margin:0">Suas Obras</div>
-      <button class="btn btn-primary btn-sm" onclick="abrirModalObra()">+ Nova Obra</button>
-    </div>
-
-    <div id="obras-list">
-      <div class="text-muted" style="font-size:13px;padding:30px 0;text-align:center">Nenhuma obra cadastrada.<br>Clique em <strong>+ Nova Obra</strong> para começar.</div>
-    </div>
-
-  </div>
-
-  <!-- ===================== LANÇAMENTO ===================== -->
-  <div class="section" id="sec-lancamento">
-
-    <div class="sec-title">Registrar Movimentação</div>
-
-    <div class="card">
+    <div class="login-card">
+      <div class="login-title">Entrar</div>
+      <div class="login-error" id="login-error"></div>
       <div class="form-group">
-        <div class="form-label">Tipo</div>
-        <div class="toggle-group">
-          <input type="radio" name="tipo" id="t-entrada" value="entrada" checked>
-          <label for="t-entrada">📥 Entrada</label>
-          <input type="radio" name="tipo" id="t-saida" value="saida">
-          <label for="t-saida">📤 Saída / Custo</label>
-          <input type="radio" name="tipo" id="t-pagamento" value="pagamento">
-          <label for="t-pagamento">✅ Pagamento Recebido</label>
+        <label class="form-label" for="login-email">E-mail</label>
+        <input class="form-input" type="email" id="login-email" placeholder="seu@email.com" autocomplete="email">
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="login-password">Senha</label>
+        <input class="form-input" type="password" id="login-password" placeholder="••••••••" autocomplete="current-password">
+      </div>
+      <button class="btn btn-primary" id="btn-login" onclick="doLogin()">Entrar</button>
+      <div class="forgot-link"><a onclick="doForgotPassword()">Esqueci minha senha</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- HOME -->
+<div id="screen-home">
+  <div class="home-header">
+    <div class="home-logo">Veneziano</div>
+    <div class="home-user">
+      <div class="user-info">
+        <div class="user-name" id="home-user-name">—</div>
+        <div class="user-role" id="home-user-role">—</div>
+      </div>
+      <div class="user-avatar" id="home-user-avatar" onclick="showProfile()" style="cursor:pointer">G</div>
+    </div>
+  </div>
+  <div class="home-body">
+    <div class="home-greeting">
+      <h2 id="home-greeting-text">Olá 👋</h2>
+      <p id="home-greeting-sub">Selecione a empresa para continuar</p>
+    </div>
+    <div class="home-section-title">Empresas</div>
+    <div class="empresa-grid">
+      <div class="empresa-card veneziano" onclick="entrarEmpresa('veneziano')">
+        <div class="empresa-dot"></div>
+        <div class="empresa-nome">Veneziano</div>
+        <div class="empresa-tipo">Esquadrias de Alumínio</div>
+        <div class="empresa-stat">
+          <div>
+            <div class="empresa-stat-val" id="stat-veneziano-obras">—</div>
+            <div class="empresa-stat-label">Obras ativas</div>
+          </div>
+          <div class="empresa-badge">Produção</div>
         </div>
       </div>
-
-      <div class="form-group">
-        <div class="form-label">Obra / Contrato</div>
-        <select class="form-select" id="f-obra">
-          <option value="">— Selecione a obra —</option>
-        </select>
+      <div class="empresa-card atrio" onclick="entrarEmpresa('atrio')">
+        <div class="empresa-dot"></div>
+        <div class="empresa-nome">Átrio</div>
+        <div class="empresa-tipo">Instalações</div>
+        <div class="empresa-stat">
+          <div>
+            <div class="empresa-stat-val" id="stat-atrio-obras">—</div>
+            <div class="empresa-stat-label">Obras ativas</div>
+          </div>
+          <div class="empresa-badge">Instalação</div>
+        </div>
       </div>
+      <div class="empresa-card zehn" onclick="entrarEmpresa('zehn')">
+        <div class="empresa-dot"></div>
+        <div class="empresa-nome">Zehn & Co.</div>
+        <div class="empresa-tipo">E-commerce</div>
+        <div class="empresa-stat">
+          <div>
+            <div class="empresa-stat-val">—</div>
+            <div class="empresa-stat-label">Em breve</div>
+          </div>
+          <div class="empresa-badge">E-comm</div>
+        </div>
+      </div>
+    </div>
+    <div class="home-section-title">Ações rápidas</div>
+    <div class="quick-grid">
+      <div class="quick-card" onclick="entrarEmpresa('atrio');setTimeout(()=>switchTab('lancamento'),400)">
+        <div class="quick-icon">＋</div>
+        <div class="quick-label">Lançar</div>
+      </div>
+      <div class="quick-card" onclick="entrarEmpresa('atrio');setTimeout(()=>switchTab('obras'),400)">
+        <div class="quick-icon">🏗</div>
+        <div class="quick-label">Obras</div>
+      </div>
+      <div class="quick-card" onclick="entrarEmpresa('atrio');setTimeout(()=>switchTab('regras'),400)">
+        <div class="quick-icon">🛡</div>
+        <div class="quick-label">Regras</div>
+      </div>
+      <div class="quick-card" onclick="showProfile()">
+        <div class="quick-icon">⚙️</div>
+        <div class="quick-label">Perfil</div>
+      </div>
+    </div>
+    <div style="text-align:center;margin-top:16px">
+      <button class="btn btn-ghost btn-sm" onclick="doLogout()">Sair</button>
+    </div>
+  </div>
+</div>
 
-      <div class="form-row col2">
+<!-- APP -->
+<div id="screen-app">
+  <div class="app-header">
+    <div class="app-header-left">
+      <button class="back-btn" onclick="voltarHome()">←</button>
+      <div>
+        <div class="app-logo" id="app-logo-text">Átrio</div>
+        <div class="app-header-sub" id="app-header-date">carregando...</div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <div class="badge badge-atrio" id="app-mes-label">Jun 2025</div>
+      <div class="user-avatar" id="app-avatar" onclick="showProfile()" style="cursor:pointer">G</div>
+    </div>
+  </div>
+  <div class="app-body">
+    <div class="tabs" id="app-tabs">
+      <button class="tab" id="tab-painel" data-active-class="active-atrio" onclick="switchTab('painel')">📊 Painel</button>
+      <button class="tab" id="tab-obras" data-active-class="active-atrio" onclick="switchTab('obras')">🏗 Obras</button>
+      <button class="tab" id="tab-lancamento" data-active-class="active-atrio" onclick="switchTab('lancamento')">＋ Lançar</button>
+      <button class="tab" id="tab-regras" data-active-class="active-atrio" onclick="switchTab('regras')">🛡 Regras</button>
+    </div>
+
+    <!-- PAINEL -->
+    <div class="section" id="sec-painel">
+      <div class="summary-bar">
+        <div class="sb-item"><div class="sb-val text-green" id="sb-entrada">R$0</div><div class="sb-label">Entradas</div></div>
+        <div class="sb-item"><div class="sb-val text-red" id="sb-saida">R$0</div><div class="sb-label">Saídas</div></div>
+        <div class="sb-item"><div class="sb-val" id="sb-saldo">R$0</div><div class="sb-label">Saldo Livre</div></div>
+        <div class="sb-item"><div class="sb-val" id="sb-obras">0</div><div class="sb-label">Obras Ativas</div></div>
+      </div>
+      <div id="alertas-container"></div>
+      <div class="sec-title">Obras em Andamento</div>
+      <div id="obras-painel-list"><div class="text-muted" style="font-size:13px;padding:20px 0;text-align:center">Nenhuma obra cadastrada ainda.</div></div>
+      <div class="divider"></div>
+      <div class="sec-title">Últimas Movimentações</div>
+      <div id="txn-list"><div class="text-muted" style="font-size:13px;padding:16px 0;text-align:center">Nenhuma movimentação ainda.</div></div>
+    </div>
+
+    <!-- OBRAS -->
+    <div class="section" id="sec-obras">
+      <div class="flex-between" style="margin-bottom:16px">
+        <div class="sec-title" style="margin:0">Suas Obras</div>
+        <button class="btn btn-primary btn-sm" id="btn-nova-obra" onclick="abrirModalObra()">+ Nova Obra</button>
+      </div>
+      <div id="obras-list"><div class="text-muted" style="font-size:13px;padding:30px 0;text-align:center">Nenhuma obra cadastrada.</div></div>
+    </div>
+
+    <!-- LANÇAMENTO -->
+    <div class="section" id="sec-lancamento">
+      <div class="sec-title">Registrar Movimentação</div>
+      <div class="card">
         <div class="form-group">
-          <div class="form-label">Valor (R$)</div>
-          <input class="form-input" type="number" id="f-valor" placeholder="0,00" step="0.01">
+          <div class="form-label">Tipo</div>
+          <div class="toggle-group">
+            <input type="radio" name="tipo" id="t-entrada" value="entrada" checked>
+            <label for="t-entrada">📥 Entrada</label>
+            <input type="radio" name="tipo" id="t-saida" value="saida">
+            <label for="t-saida">📤 Saída / Custo</label>
+            <input type="radio" name="tipo" id="t-pagamento" value="pagamento">
+            <label for="t-pagamento">✅ Pagamento Recebido</label>
+          </div>
         </div>
         <div class="form-group">
-          <div class="form-label">Data</div>
-          <input class="form-input" type="date" id="f-data">
+          <div class="form-label">Obra / Contrato</div>
+          <select class="form-select" id="f-obra"><option value="">— Selecione a obra —</option></select>
         </div>
+        <div class="form-row col2">
+          <div class="form-group">
+            <div class="form-label">Valor (R$)</div>
+            <input class="form-input" type="number" id="f-valor" placeholder="0,00" step="0.01">
+          </div>
+          <div class="form-group">
+            <div class="form-label">Data</div>
+            <input class="form-input" type="date" id="f-data">
+          </div>
+        </div>
+        <div class="form-group">
+          <div class="form-label">Categoria</div>
+          <select class="form-select" id="f-categoria">
+            <option>Entrada de contrato</option>
+            <option>Pagamento de parcela</option>
+            <option>Material / Insumos</option>
+            <option>Mão de obra</option>
+            <option>Transporte / Frete</option>
+            <option>Ferramenta / Equipamento</option>
+            <option>Imposto / Taxa</option>
+            <option>Despesa administrativa</option>
+            <option>Outros</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <div class="form-label">Descrição</div>
+          <input class="form-input" type="text" id="f-descricao" placeholder="Ex: Compra de perfis — NF 1234">
+        </div>
+        <div id="aviso-lancamento" style="display:none;margin-bottom:12px;"></div>
+        <button class="btn btn-primary" id="btn-lancar" onclick="lancarMovimentacao()">Registrar</button>
       </div>
-
-      <div class="form-group">
-        <div class="form-label">Categoria</div>
-        <select class="form-select" id="f-categoria">
-          <option>Entrada de contrato</option>
-          <option>Pagamento de parcela</option>
-          <option>Material / Insumos</option>
-          <option>Mão de obra</option>
-          <option>Transporte / Frete</option>
-          <option>Ferramenta / Equipamento</option>
-          <option>Imposto / Taxa</option>
-          <option>Despesa administrativa</option>
-          <option>Outros</option>
-        </select>
-      </div>
-
-      <div class="form-group">
-        <div class="form-label">Descrição</div>
-        <input class="form-input" type="text" id="f-descricao" placeholder="Ex: Compra de perfis de alumínio — NF 1234">
-      </div>
-
-      <div id="aviso-lancamento" style="display:none;margin-bottom:12px;"></div>
-
-      <button class="btn btn-primary" onclick="lancarMovimentacao()">Registrar</button>
     </div>
 
+    <!-- REGRAS -->
+    <div class="section" id="sec-regras">
+      <div class="sec-title">Regras de Proteção</div>
+      <div class="alert alert-ok"><span class="alert-icon">🛡</span><span>Regras definidas para proteger a operação. Leia com calma.</span></div>
+      <div class="regra-box"><div class="regra-title">Regra 1 — Entrada mínima de 50%</div><div class="regra-desc">Nenhum serviço começa sem 50% de entrada. Sem exceção. Nem para cliente antigo, nem para urgência.</div></div>
+      <div class="regra-box"><div class="regra-title">Regra 2 — Cada obra tem sua caixinha</div><div class="regra-desc">O dinheiro de uma obra não cobre custo de outra. O que sobra é saldo livre — o resto não existe até a obra fechar.</div></div>
+      <div class="regra-box"><div class="regra-title">Regra 3 — Custo sempre antes de gastar</div><div class="regra-desc">Antes de comprar qualquer material, verifique o saldo da obra no painel.</div></div>
+      <div class="regra-box"><div class="regra-title">Regra 4 — Nada do novo para cobrir o velho</div><div class="regra-desc">Dívidas antigas são pagas com pró-labore, não com fluxo atual.</div></div>
+      <div class="regra-box"><div class="regra-title">Regra 5 — Lucro só sai quando a obra fecha</div><div class="regra-desc">Enquanto a obra não está 100% concluída, o saldo fica reservado.</div></div>
+      <div class="regra-box"><div class="regra-title">Regra 6 — Checklist antes de fechar proposta</div><div class="regra-desc">Material + mão de obra + impostos + despesas + 20% de margem mínima. Se não fechar, não assina.</div></div>
+      <div class="divider"></div>
+      <div class="sec-title">Checklist de Nova Proposta</div>
+      <div id="checklist-container"></div>
+      <button class="btn btn-ghost mt8" onclick="resetChecklist()">Reiniciar Checklist</button>
+    </div>
   </div>
-
-  <!-- ===================== REGRAS ===================== -->
-  <div class="section" id="sec-regras">
-
-    <div class="sec-title">Regras de Proteção</div>
-    <div class="alert alert-ok">
-      <span class="alert-icon">🛡</span>
-      <span>Estas regras foram definidas para proteger a Átrio de repetir o ciclo que quebrou a Veneziano. Leia com calma.</span>
-    </div>
-
-    <div class="regra-box">
-      <div class="regra-title">Regra 1 — Entrada mínima de 50%</div>
-      <div class="regra-desc">Nenhum serviço começa sem 50% de entrada. Sem exceção. Nem para cliente antigo, nem para urgência. Se o cliente não consegue pagar 50%, ele não é seu cliente agora.</div>
-    </div>
-
-    <div class="regra-box">
-      <div class="regra-title">Regra 2 — Cada obra tem sua caixinha</div>
-      <div class="regra-desc">O dinheiro de uma obra não cobre custo de outra. Ao registrar uma entrada, o sistema reserva automaticamente o percentual de custo estimado. O que sobra é o seu saldo livre — o resto não existe até a obra fechar.</div>
-    </div>
-
-    <div class="regra-box">
-      <div class="regra-title">Regra 3 — Custo sempre antes de gastar</div>
-      <div class="regra-desc">Antes de comprar qualquer material, verifique o saldo da obra no painel. Se a obra não tem saldo suficiente para cobrir a compra, espere o próximo pagamento ou renegocie o prazo com o cliente.</div>
-    </div>
-
-    <div class="regra-box">
-      <div class="regra-title">Regra 4 — Nada do novo para cobrir o velho</div>
-      <div class="regra-desc">As dívidas da Veneziano são pagas com o seu pró-labore, não com o fluxo da Átrio. Se você começar a misturar, você estará financiando o passado com o futuro — e vai quebrar de novo.</div>
-    </div>
-
-    <div class="regra-box">
-      <div class="regra-title">Regra 5 — Lucro só sai quando a obra fecha</div>
-      <div class="regra-desc">Enquanto a obra não está 100% concluída, o saldo dela fica reservado. Não antecipe lucro de obra aberta. Você pode estar a um imprevist de virar prejuízo.</div>
-    </div>
-
-    <div class="regra-box">
-      <div class="regra-title">Regra 6 — Checklist antes de fechar proposta</div>
-      <div class="regra-desc">Custo de material estimado + mão de obra + impostos + despesas + 20% de margem mínima. Se não fechar a conta, não assina o contrato. Desconto é redução de margem — só com justificativa registrada.</div>
-    </div>
-
-    <div class="divider"></div>
-    <div class="sec-title">Checklist de Nova Proposta</div>
-    <div id="checklist-container"></div>
-    <button class="btn btn-ghost mt8" onclick="resetChecklist()">Reiniciar Checklist</button>
-
-  </div>
-
-</div><!-- /app -->
+</div>
 
 <!-- MODAL NOVA OBRA -->
 <div class="modal-overlay" id="modal-obra">
@@ -434,557 +500,416 @@
       <div class="modal-title">Nova Obra</div>
       <button class="modal-close" onclick="fecharModal('modal-obra')">✕</button>
     </div>
-
-    <div class="form-group">
-      <div class="form-label">Nome / Identificação</div>
-      <input class="form-input" type="text" id="o-nome" placeholder="Ex: Residência Silva — Jd. Paulista">
-    </div>
-
-    <div class="form-group">
-      <div class="form-label">Cliente</div>
-      <input class="form-input" type="text" id="o-cliente" placeholder="Nome do cliente">
-    </div>
-
+    <div class="form-group"><div class="form-label">Nome / Identificação</div><input class="form-input" type="text" id="o-nome" placeholder="Ex: Residência Silva — Jd. Paulista"></div>
+    <div class="form-group"><div class="form-label">Cliente</div><input class="form-input" type="text" id="o-cliente" placeholder="Nome do cliente"></div>
     <div class="form-group">
       <div class="form-label">Tipo de Serviço</div>
       <div class="toggle-group">
-        <input type="radio" name="o-tipo" id="ot1" value="instalacao" checked><label for="ot1">Instalação</label>
-        <input type="radio" name="o-tipo" id="ot2" value="manutencao"><label for="ot2">Manutenção</label>
-        <input type="radio" name="o-tipo" id="ot3" value="fabricacao"><label for="ot3">Fabricação</label>
-        <input type="radio" name="o-tipo" id="ot4" value="misto"><label for="ot4">Misto</label>
+        <input type="radio" name="o-tipo" id="ot-instalacao" value="instalacao" checked><label for="ot-instalacao">Instalação</label>
+        <input type="radio" name="o-tipo" id="ot-manutencao" value="manutencao"><label for="ot-manutencao">Manutenção</label>
+        <input type="radio" name="o-tipo" id="ot-fornecimento" value="fornecimento"><label for="ot-fornecimento">Fornecimento</label>
+        <input type="radio" name="o-tipo" id="ot-contrato" value="contrato"><label for="ot-contrato">Contrato</label>
       </div>
     </div>
-
     <div class="form-row col2">
-      <div class="form-group">
-        <div class="form-label">Valor Total (R$)</div>
-        <input class="form-input" type="number" id="o-total" placeholder="0,00" step="0.01" oninput="calcObra()">
-      </div>
-      <div class="form-group">
-        <div class="form-label">% Custo Estimado</div>
-        <input class="form-input" type="number" id="o-pct-custo" placeholder="Ex: 55" value="60" oninput="calcObra()">
-      </div>
+      <div class="form-group"><div class="form-label">Valor do Contrato (R$)</div><input class="form-input" type="number" id="o-valor" placeholder="0,00" step="0.01"></div>
+      <div class="form-group"><div class="form-label">Data Início</div><input class="form-input" type="date" id="o-data"></div>
     </div>
-
     <div class="form-row col2">
-      <div class="form-group">
-        <div class="form-label">Custo Estimado (R$)</div>
-        <input class="form-input" type="number" id="o-custo-calc" placeholder="Calculado auto" readonly style="opacity:0.6">
-      </div>
-      <div class="form-group">
-        <div class="form-label">Margem Estimada (R$)</div>
-        <input class="form-input" type="number" id="o-margem-calc" placeholder="Calculado auto" readonly style="opacity:0.6">
-      </div>
+      <div class="form-group"><div class="form-label">Custo Estimado (R$)</div><input class="form-input" type="number" id="o-custo" placeholder="0,00" step="0.01"></div>
+      <div class="form-group"><div class="form-label">Margem Estimada (R$)</div><input class="form-input" type="number" id="o-margem" placeholder="0,00" step="0.01"></div>
     </div>
-
-    <div class="form-row col2">
-      <div class="form-group">
-        <div class="form-label">Data de Início</div>
-        <input class="form-input" type="date" id="o-inicio">
-      </div>
-      <div class="form-group">
-        <div class="form-label">Prazo Estimado</div>
-        <input class="form-input" type="date" id="o-prazo">
-      </div>
-    </div>
-
-    <div class="form-group">
-      <div class="form-label">Observação</div>
-      <textarea class="form-textarea" id="o-obs" placeholder="Condições do contrato, forma de pagamento, etc."></textarea>
-    </div>
-
-    <div id="o-alerta" style="display:none;margin-bottom:12px;"></div>
-
+    <div class="form-group"><div class="form-label">Observações</div><textarea class="form-textarea" id="o-obs" placeholder="Detalhes adicionais..."></textarea></div>
     <button class="btn btn-primary" onclick="salvarObra()">Cadastrar Obra</button>
   </div>
 </div>
 
-<!-- MODAL DETALHE OBRA -->
+<!-- MODAL DETALHE -->
 <div class="modal-overlay" id="modal-detalhe">
   <div class="modal">
     <div class="modal-header">
-      <div class="modal-title" id="d-titulo">—</div>
+      <div class="modal-title">Detalhe da Obra</div>
       <button class="modal-close" onclick="fecharModal('modal-detalhe')">✕</button>
     </div>
-    <div id="d-content"></div>
+    <div id="modal-detalhe-content"></div>
   </div>
 </div>
 
-<!-- TOAST -->
-<div class="toast" id="toast"></div>
+<!-- MODAL PERFIL -->
+<div class="modal-overlay" id="modal-profile">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-header">
+      <div class="modal-title">Meu Perfil</div>
+      <button class="modal-close" onclick="fecharModal('modal-profile')">✕</button>
+    </div>
+    <div id="modal-profile-content"></div>
+  </div>
+</div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<div id="toast" class="toast"></div>
+
 <script>
-// =================== SUPABASE ===================
 const SUPABASE_URL = 'https://sswcegohbegzjdobrrtu.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNzd2NlZ29oYmVnempkb2JycnR1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA5NzQ3MTAsImV4cCI6MjA5NjU1MDcxMH0.B4lPuoD29GhUGQE5MqD9GpV7Tf7v-H8QflRd_-ede3o';
-const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNzd2NlZ29oYmVnempkb2JycnR1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwODA3NDIsImV4cCI6MjA2MjY1Njc0Mn0.h4_W3RKbMpKZ-Y5gHsXDl5BtUc44LgKm7YJVuWTqVtA';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
-// =================== STATE ===================
-let state = {
-  obras: [],
-  transacoes: []
+let currentUser = null, currentEmpresa = null, userRole = 'adm';
+const state = { obras: [], transacoes: [] };
+
+const PERMS = {
+  adm:          { lancar:true,  obras:true,  excluir:true,  config:true  },
+  gerente:      { lancar:true,  obras:true,  excluir:false, config:false },
+  operador:     { lancar:true,  obras:false, excluir:false, config:false },
+  visualizador: { lancar:false, obras:false, excluir:false, config:false }
 };
+function can(a) { return PERMS[userRole]?.[a] ?? false; }
 
-async function loadState() {
-  const { data: obras } = await sb.from('obras').select('*').order('created_at', { ascending: true });
-  const { data: transacoes } = await sb.from('transacoes').select('*').order('data', { ascending: false });
-  state.obras = obras || [];
-  state.transacoes = transacoes || [];
+async function initAuth() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (session) { currentUser = session.user; userRole = currentUser?.user_metadata?.role || 'adm'; showHome(); }
+  else showLogin();
+  document.getElementById('loading-overlay').classList.add('hidden');
 }
 
-async function saveObra(obra) {
-  const { data, error } = await sb.from('obras').insert([obra]).select().single();
-  if (error) { showToast('Erro ao salvar obra: ' + error.message); return null; }
-  return data;
+async function doLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const pw = document.getElementById('login-password').value;
+  const errEl = document.getElementById('login-error');
+  const btn = document.getElementById('btn-login');
+  errEl.style.display = 'none';
+  if (!email || !pw) { errEl.textContent = 'Preencha e-mail e senha.'; errEl.style.display = 'block'; return; }
+  btn.disabled = true; btn.textContent = 'Entrando...';
+  const { data, error } = await sb.auth.signInWithPassword({ email, password: pw });
+  btn.disabled = false; btn.textContent = 'Entrar';
+  if (error) { errEl.textContent = error.message === 'Invalid login credentials' ? 'E-mail ou senha incorretos.' : error.message; errEl.style.display = 'block'; return; }
+  currentUser = data.user; userRole = currentUser?.user_metadata?.role || 'adm'; showHome();
 }
 
-async function updateObra(id, updates) {
-  const { error } = await sb.from('obras').update(updates).eq('id', id);
-  if (error) showToast('Erro ao atualizar obra');
+async function doLogout() {
+  await sb.auth.signOut(); currentUser = null; currentEmpresa = null; state.obras = []; state.transacoes = []; showLogin();
 }
 
-async function deleteObra(id) {
-  await sb.from('transacoes').delete().eq('obra_id', id);
-  await sb.from('obras').delete().eq('id', id);
+async function doForgotPassword() {
+  const email = document.getElementById('login-email').value.trim();
+  if (!email) { showToast('Digite seu e-mail primeiro.'); return; }
+  const { error } = await sb.auth.resetPasswordForEmail(email);
+  showToast(error ? 'Erro: ' + error.message : '✅ Link enviado para ' + email);
 }
 
-async function saveTransacao(txn) {
-  const { data, error } = await sb.from('transacoes').insert([txn]).select().single();
-  if (error) { showToast('Erro ao salvar lançamento: ' + error.message); return null; }
-  return data;
+function showLogin() {
+  document.getElementById('screen-login').style.display = 'flex';
+  document.getElementById('screen-home').style.display = 'none';
+  document.getElementById('screen-app').style.display = 'none';
+  document.getElementById('login-email').value = '';
+  document.getElementById('login-password').value = '';
+  document.getElementById('login-error').style.display = 'none';
 }
 
-// =================== FORMAT ===================
-function fmt(v) {
-  return 'R$ ' + parseFloat(v||0).toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
+function showHome() {
+  document.getElementById('screen-login').style.display = 'none';
+  document.getElementById('screen-home').style.display = 'block';
+  document.getElementById('screen-app').style.display = 'none';
+  const email = currentUser?.email || '';
+  const name = currentUser?.user_metadata?.name || email.split('@')[0] || 'Usuário';
+  const init = name.charAt(0).toUpperCase();
+  document.getElementById('home-user-name').textContent = name;
+  document.getElementById('home-user-role').textContent = roleLabel(userRole);
+  document.getElementById('home-user-avatar').textContent = init;
+  const h = new Date().getHours();
+  const gr = h < 12 ? 'Bom dia' : h < 18 ? 'Boa tarde' : 'Boa noite';
+  document.getElementById('home-greeting-text').textContent = gr + ', ' + name.split(' ')[0] + ' 👋';
+  loadHomeStats();
 }
 
-function fmtDate(d) {
-  if (!d) return '—';
-  const [y,m,day] = d.split('-');
-  return `${day}/${m}/${y}`;
+async function loadHomeStats() {
+  const { data: obras } = await sb.from('obras').select('id,status,empresa').eq('status','ativa');
+  if (obras) {
+    document.getElementById('stat-veneziano-obras').textContent = obras.filter(o => o.empresa === 'veneziano').length;
+    document.getElementById('stat-atrio-obras').textContent = obras.filter(o => o.empresa === 'atrio').length;
+  }
 }
 
-// =================== TABS ===================
+async function entrarEmpresa(empresa) {
+  currentEmpresa = empresa;
+  const ac = 'active-' + empresa;
+  document.querySelectorAll('.tab').forEach(t => { t.dataset.activeClass = ac; t.classList.remove('active-veneziano','active-atrio','active-zehn'); });
+  const logo = document.getElementById('app-logo-text');
+  logo.textContent = nomeEmpresa(empresa); logo.className = 'app-logo ' + empresa;
+  const mesEl = document.getElementById('app-mes-label');
+  mesEl.className = 'badge badge-' + empresa;
+  document.querySelectorAll('.regra-box').forEach(r => { r.style.borderLeftColor = getComputedStyle(document.documentElement).getPropertyValue('--'+empresa).trim(); });
+  const name = currentUser?.user_metadata?.name || currentUser?.email?.split('@')[0] || 'U';
+  document.getElementById('app-avatar').textContent = name.charAt(0).toUpperCase();
+  document.getElementById('btn-nova-obra').style.display = can('obras') ? 'inline-block' : 'none';
+  document.getElementById('btn-lancar').style.display = can('lancar') ? 'inline-block' : 'none';
+  document.getElementById('screen-login').style.display = 'none';
+  document.getElementById('screen-home').style.display = 'none';
+  document.getElementById('screen-app').style.display = 'block';
+  updateHeader();
+  await loadState();
+  switchTab('painel');
+  populateObraSelect();
+  renderChecklist();
+}
+
+function voltarHome() { showHome(); }
+
+function nomeEmpresa(e) { return {veneziano:'Veneziano',atrio:'Átrio',zehn:'Zehn & Co.'}[e]||e; }
+function roleLabel(r) { return {adm:'ADM',gerente:'Gerente',operador:'Operador',visualizador:'Visualizador'}[r]||r; }
+
+function showProfile() {
+  const email = currentUser?.email || '—';
+  const name = currentUser?.user_metadata?.name || email.split('@')[0];
+  document.getElementById('modal-profile-content').innerHTML = `
+    <div style="text-align:center;margin-bottom:20px">
+      <div style="width:56px;height:56px;border-radius:50%;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;margin:0 auto 10px">${name.charAt(0).toUpperCase()}</div>
+      <div style="font-family:var(--font-display);font-size:17px;font-weight:700">${name}</div>
+      <div style="margin-top:6px"><span class="role-badge role-${userRole}">${roleLabel(userRole)}</span></div>
+    </div>
+    <div class="profile-item"><span class="profile-label">E-mail</span><span class="profile-val" style="font-size:12px">${email}</span></div>
+    <div class="profile-item"><span class="profile-label">Nível de acesso</span><span class="profile-val">${roleLabel(userRole)}</span></div>
+    <div class="profile-item"><span class="profile-label">Empresa atual</span><span class="profile-val">${currentEmpresa ? nomeEmpresa(currentEmpresa) : '—'}</span></div>
+    <div class="mt16"><button class="btn btn-danger" onclick="doLogout();fecharModal('modal-profile')">Sair da conta</button></div>
+  `;
+  document.getElementById('modal-profile').classList.add('open');
+}
+
 function switchTab(name) {
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-  document.getElementById('sec-' + name).classList.add('active');
-  event.target.classList.add('active');
-  if (name === 'painel') renderPainel();
-  if (name === 'obras') renderObras();
-  if (name === 'lancamento') populateObraSelect();
-  if (name === 'regras') renderChecklist();
+  document.querySelectorAll('.tab').forEach(t => {
+    const ac = t.dataset.activeClass || 'active-atrio';
+    t.classList.remove('active-veneziano','active-atrio','active-zehn');
+    if (t.id === 'tab-' + name) t.classList.add(ac);
+  });
+  const sec = document.getElementById('sec-' + name);
+  if (sec) sec.classList.add('active');
+  if (name==='painel') renderPainel();
+  if (name==='obras') renderObras();
+  if (name==='lancamento') populateObraSelect();
+  if (name==='regras') renderChecklist();
 }
 
-// =================== HEADER ===================
 function updateHeader() {
   const now = new Date();
-  const dias = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
-  const meses = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
-  document.getElementById('headerDate').textContent =
-    dias[now.getDay()] + ', ' + now.getDate() + ' de ' + ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'][now.getMonth()] + ' de ' + now.getFullYear();
-  document.getElementById('mesLabel').textContent = meses[now.getMonth()] + ' ' + now.getFullYear();
+  const days=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+  const months=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  document.getElementById('app-header-date').textContent = `${days[now.getDay()]}, ${now.getDate()} de ${months[now.getMonth()]} de ${now.getFullYear()}`;
+  document.getElementById('app-mes-label').textContent = `${months[now.getMonth()]} ${now.getFullYear()}`;
 }
 
-// =================== PAINEL ===================
+async function loadState() {
+  showToast('⏳ Carregando...');
+  const { data: obras } = await sb.from('obras').select('*').eq('empresa', currentEmpresa).order('created_at',{ascending:false});
+  state.obras = obras || [];
+  const { data: txns } = await sb.from('transacoes').select('*').eq('empresa', currentEmpresa).order('data',{ascending:false}).limit(100);
+  state.transacoes = txns || [];
+}
+
+async function saveObra(o) {
+  const { data, error } = await sb.from('obras').insert([{...o, empresa:currentEmpresa}]).select().single();
+  if (error) { showToast('Erro: '+error.message); return null; }
+  return data;
+}
+async function updateObra(id, u) {
+  const { error } = await sb.from('obras').update(u).eq('id',id);
+  if (error) showToast('Erro: '+error.message);
+}
+async function deleteObra(id) {
+  await sb.from('transacoes').delete().eq('obra_id',id);
+  await sb.from('obras').delete().eq('id',id);
+}
+async function saveTransacao(t) {
+  const { data, error } = await sb.from('transacoes').insert([{...t, empresa:currentEmpresa}]).select().single();
+  if (error) { showToast('Erro: '+error.message); return null; }
+  return data;
+}
+
+function fmt(v) { return 'R$'+(v||0).toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:0}); }
+function fmtDate(d) { if (!d) return '—'; const [y,m,day]=d.split('-'); return `${day}/${m}/${y}`; }
+function getSaldoObra(id) { return state.transacoes.filter(t=>t.obra_id===id).reduce((a,t)=>a+(t.tipo!=='saida'?t.valor:-t.valor),0); }
+
 function renderPainel() {
-  const now = new Date();
-  const mes = now.getMonth();
-  const ano = now.getFullYear();
-
-  const txnMes = state.transacoes.filter(t => {
-    const d = new Date(t.data + 'T12:00:00');
-    return d.getMonth() === mes && d.getFullYear() === ano;
-  });
-
-  const entradas = txnMes.filter(t => t.tipo === 'entrada' || t.tipo === 'pagamento').reduce((a,t) => a + t.valor, 0);
-  const saidas = txnMes.filter(t => t.tipo === 'saida').reduce((a,t) => a + t.valor, 0);
-  const saldoLivre = calcSaldoLivre();
-
-  document.getElementById('sb-entrada').textContent = fmt(entradas);
-  document.getElementById('sb-saida').textContent = fmt(saidas);
-  document.getElementById('sb-saldo').textContent = fmt(saldoLivre);
-  document.getElementById('sb-obras').textContent = state.obras.filter(o => o.status === 'ativa').length;
-
-  // ALERTAS
+  const now = new Date(); const mes=now.getMonth()+1; const ano=now.getFullYear();
+  const txnMes = state.transacoes.filter(t=>{ if(!t.data) return false; const [y,m]=t.data.split('-'); return parseInt(y)===ano&&parseInt(m)===mes; });
+  const entrada = txnMes.filter(t=>t.tipo!=='saida').reduce((a,t)=>a+t.valor,0);
+  const saida = txnMes.filter(t=>t.tipo==='saida').reduce((a,t)=>a+t.valor,0);
+  const saldo = entrada - saida;
+  const obrasAtivas = state.obras.filter(o=>o.status==='ativa').length;
+  document.getElementById('sb-entrada').textContent = fmt(entrada);
+  document.getElementById('sb-saida').textContent = fmt(saida);
+  document.getElementById('sb-saldo').textContent = fmt(saldo);
+  document.getElementById('sb-saldo').className = 'sb-val '+(saldo>=0?'text-green':'text-red');
+  document.getElementById('sb-obras').textContent = obrasAtivas;
   const alertasEl = document.getElementById('alertas-container');
   alertasEl.innerHTML = '';
-  const obrasAtrasadas = state.obras.filter(o => o.status === 'ativa' && o.prazo && new Date(o.prazo) < new Date());
-  if (obrasAtrasadas.length > 0) {
-    alertasEl.innerHTML += `<div class="alert alert-warn"><span class="alert-icon">⚠️</span><span>${obrasAtrasadas.length} obra(s) com prazo vencido — verifique.</span></div>`;
-  }
-  const obrasNegativas = state.obras.filter(o => o.status === 'ativa' && getSaldoObra(o.id) < 0);
-  if (obrasNegativas.length > 0) {
-    alertasEl.innerHTML += `<div class="alert alert-danger"><span class="alert-icon">🚨</span><span>${obrasNegativas.length} obra(s) com saldo negativo — custo superou as entradas!</span></div>`;
-  }
-
-  // OBRAS NO PAINEL
-  const listaEl = document.getElementById('obras-painel-list');
-  const obrasAtivas = state.obras.filter(o => o.status === 'ativa');
-  if (obrasAtivas.length === 0) {
-    listaEl.innerHTML = '<div class="text-muted" style="font-size:13px;padding:20px 0;text-align:center">Nenhuma obra ativa.</div>';
-  } else {
-    listaEl.innerHTML = obrasAtivas.map(o => {
-      const recebido = getRecebidoObra(o.id);
-      const gasto = getGastoObra(o.id);
-      const saldo = getSaldoObra(o.id);
-      const pctGasto = o.total > 0 ? Math.min(100, (gasto / (o.custo_estimado || o.total)) * 100) : 0;
-      const pctRec = o.total > 0 ? Math.min(100, (recebido / o.total) * 100) : 0;
-      const fillClass = pctGasto > 90 ? 'fill-red' : pctGasto > 70 ? 'fill-yellow' : 'fill-green';
-      return `<div class="contract-item" onclick="verDetalheObra(${o.id})">
-        <div class="ci-top">
-          <div>
-            <div class="ci-name">${o.nome}</div>
-            <div class="ci-client">${o.cliente}</div>
-          </div>
-          <span class="badge ${saldo < 0 ? 'badge-red' : saldo < (o.custo_estimado * 0.2) ? 'badge-yellow' : 'badge-green'}">${fmt(saldo)}</span>
-        </div>
-        <div class="progress-wrap">
-          <div class="progress-label"><span>Custo consumido</span><span>${pctGasto.toFixed(0)}%</span></div>
-          <div class="progress-bar"><div class="progress-fill ${fillClass}" style="width:${pctGasto}%"></div></div>
-        </div>
-        <div class="ci-amounts">
-          <div class="ci-amount"><div class="ci-amount-label">Total Contrato</div><div class="ci-amount-val">${fmt(o.total)}</div></div>
-          <div class="ci-amount"><div class="ci-amount-label">Recebido</div><div class="ci-amount-val text-green">${fmt(recebido)}</div></div>
-          <div class="ci-amount"><div class="ci-amount-label">Gasto</div><div class="ci-amount-val text-red">${fmt(gasto)}</div></div>
-        </div>
-      </div>`;
-    }).join('');
-  }
-
-  // TRANSAÇÕES
+  const obrasEmRisco = state.obras.filter(o=>o.status==='ativa'&&getSaldoObra(o.id)<0);
+  if (obrasEmRisco.length>0) alertasEl.innerHTML += `<div class="alert alert-danger"><span class="alert-icon">🚨</span><span>${obrasEmRisco.length} obra(s) com saldo negativo: ${obrasEmRisco.map(o=>o.nome).join(', ')}</span></div>`;
+  if (saldo<0) alertasEl.innerHTML += `<div class="alert alert-warn"><span class="alert-icon">⚠️</span><span>Saldo mensal negativo — revise as saídas.</span></div>`;
+  const ativas = state.obras.filter(o=>o.status==='ativa');
+  const obrasList = document.getElementById('obras-painel-list');
+  obrasList.innerHTML = ativas.length===0
+    ? '<div class="text-muted" style="font-size:13px;padding:20px 0;text-align:center">Nenhuma obra ativa.</div>'
+    : ativas.map(o => {
+        const so=getSaldoObra(o.id); const pct=o.valor_contrato>0?Math.min(100,Math.round(so/o.valor_contrato*100)):0;
+        const fc=so<0?'fill-red':pct>60?'fill-green':'fill-yellow';
+        return `<div class="contract-item" onclick="verDetalheObra(${o.id})"><div class="ci-top"><div><div class="ci-name">${o.nome}</div><div class="ci-client">${o.cliente}</div></div><span class="badge badge-green">Ativa</span></div><div class="progress-wrap"><div class="progress-label"><span>Saldo</span><span>${fmt(so)}</span></div><div class="progress-bar"><div class="progress-fill ${fc}" style="width:${Math.max(0,pct)}%"></div></div></div><div class="ci-amounts"><div class="ci-amount"><div class="ci-amount-label">Contrato</div><div class="ci-amount-val">${fmt(o.valor_contrato)}</div></div><div class="ci-amount"><div class="ci-amount-label">Custo Est.</div><div class="ci-amount-val">${fmt(o.custo_estimado)}</div></div><div class="ci-amount"><div class="ci-amount-label">Margem Est.</div><div class="ci-amount-val">${fmt(o.margem_estimada)}</div></div></div></div>`;
+      }).join('');
   const txnEl = document.getElementById('txn-list');
-  const ultimas = [...state.transacoes].sort((a,b) => new Date(b.data) - new Date(a.data)).slice(0, 8);
-  if (ultimas.length === 0) {
-    txnEl.innerHTML = '<div class="text-muted" style="font-size:13px;padding:16px 0;text-align:center">Nenhuma movimentação ainda.</div>';
-  } else {
-    txnEl.innerHTML = ultimas.map(t => {
-      const obra = state.obras.find(o => o.id === t.obra_id);
-      const isIncome = t.tipo !== 'saida';
-      return `<div class="txn-item">
-        <div>
-          <div class="txn-desc">${t.descricao || t.categoria}</div>
-          <div class="txn-date">${fmtDate(t.data)} · ${obra ? obra.nome : '—'}</div>
-        </div>
-        <div class="txn-val ${isIncome ? 'income' : 'expense'}">${isIncome ? '+' : '-'}${fmt(t.valor)}</div>
-      </div>`;
-    }).join('');
-  }
+  const recent = state.transacoes.slice(0,10);
+  txnEl.innerHTML = recent.length===0
+    ? '<div class="text-muted" style="font-size:13px;padding:16px 0;text-align:center">Nenhuma movimentação ainda.</div>'
+    : recent.map(t=>`<div class="txn-item"><div><div class="txn-desc">${t.descricao||t.categoria}</div><div class="txn-date">${fmtDate(t.data)} · ${t.categoria}</div></div><div class="txn-val ${t.tipo!=='saida'?'income':'expense'}">${t.tipo!=='saida'?'+':'-'}${fmt(t.valor)}</div></div>`).join('');
 }
 
-// =================== HELPERS FINANCEIROS ===================
-function getRecebidoObra(id) {
-  return state.transacoes.filter(t => t.obra_id === id && (t.tipo === 'entrada' || t.tipo === 'pagamento')).reduce((a,t) => a+t.valor, 0);
-}
-function getGastoObra(id) {
-  return state.transacoes.filter(t => t.obra_id === id && t.tipo === 'saida').reduce((a,t) => a+t.valor, 0);
-}
-function getSaldoObra(id) {
-  return getRecebidoObra(id) - getGastoObra(id);
-}
-function calcSaldoLivre() {
-  const totalEntradas = state.transacoes.filter(t => t.tipo === 'entrada' || t.tipo === 'pagamento').reduce((a,t) => a+t.valor, 0);
-  const totalSaidas = state.transacoes.filter(t => t.tipo === 'saida').reduce((a,t) => a+t.valor, 0);
-  return totalEntradas - totalSaidas;
-}
-
-// =================== OBRAS ===================
 function renderObras() {
   const el = document.getElementById('obras-list');
-  if (state.obras.length === 0) {
-    el.innerHTML = '<div class="text-muted" style="font-size:13px;padding:30px 0;text-align:center">Nenhuma obra cadastrada.<br>Clique em <strong>+ Nova Obra</strong> para começar.</div>';
-    return;
-  }
+  if (!state.obras.length) { el.innerHTML='<div class="text-muted" style="font-size:13px;padding:30px 0;text-align:center">Nenhuma obra cadastrada.</div>'; return; }
   el.innerHTML = state.obras.map(o => {
-    const recebido = getRecebidoObra(o.id);
-    const gasto = getGastoObra(o.id);
-    const saldo = getSaldoObra(o.id);
-    const pctGasto = (o.custo_estimado||0) > 0 ? Math.min(100,(gasto/(o.custo_estimado))*100) : 0;
-    const fillClass = pctGasto > 90 ? 'fill-red' : pctGasto > 70 ? 'fill-yellow' : 'fill-green';
-    const statusBadge = o.status === 'ativa' ? 'badge-green' : o.status === 'concluida' ? 'badge-gold' : 'badge-red';
-    return `<div class="contract-item" onclick="verDetalheObra(${o.id})">
-      <div class="ci-top">
-        <div>
-          <div class="ci-name">${o.nome}</div>
-          <div class="ci-client">${o.cliente} · ${o.tipo}</div>
-        </div>
-        <span class="badge ${statusBadge}">${o.status}</span>
-      </div>
-      <div class="progress-wrap">
-        <div class="progress-label"><span>Custo vs Estimado</span><span>${pctGasto.toFixed(0)}%</span></div>
-        <div class="progress-bar"><div class="progress-fill ${fillClass}" style="width:${pctGasto}%"></div></div>
-      </div>
-      <div class="ci-amounts">
-        <div class="ci-amount"><div class="ci-amount-label">Contrato</div><div class="ci-amount-val">${fmt(o.total)}</div></div>
-        <div class="ci-amount"><div class="ci-amount-label">Recebido</div><div class="ci-amount-val text-green">${fmt(recebido)}</div></div>
-        <div class="ci-amount"><div class="ci-amount-label">Gasto</div><div class="ci-amount-val text-red">${fmt(gasto)}</div></div>
-        <div class="ci-amount"><div class="ci-amount-label">Saldo</div><div class="ci-amount-val ${saldo<0?'text-red':'text-gold'}">${fmt(saldo)}</div></div>
-      </div>
-    </div>`;
+    const so=getSaldoObra(o.id);
+    const badge = o.status==='ativa' ? '<span class="badge badge-green">Ativa</span>' : '<span class="badge badge-veneziano">Concluída</span>';
+    return `<div class="contract-item" onclick="verDetalheObra(${o.id})"><div class="ci-top"><div><div class="ci-name">${o.nome}</div><div class="ci-client">${o.cliente}</div></div>${badge}</div><div class="ci-amounts"><div class="ci-amount"><div class="ci-amount-label">Contrato</div><div class="ci-amount-val">${fmt(o.valor_contrato)}</div></div><div class="ci-amount"><div class="ci-amount-label">Saldo</div><div class="ci-amount-val ${so<0?'text-red':''}">${fmt(so)}</div></div><div class="ci-amount"><div class="ci-amount-label">Início</div><div class="ci-amount-val" style="font-size:12px">${fmtDate(o.data_inicio)}</div></div></div></div>`;
   }).join('');
 }
 
 function abrirModalObra() {
-  const hoje = new Date().toISOString().split('T')[0];
-  document.getElementById('o-nome').value = '';
-  document.getElementById('o-cliente').value = '';
-  document.getElementById('o-total').value = '';
-  document.getElementById('o-pct-custo').value = '60';
-  document.getElementById('o-custo-calc').value = '';
-  document.getElementById('o-margem-calc').value = '';
-  document.getElementById('o-inicio').value = hoje;
-  document.getElementById('o-prazo').value = '';
-  document.getElementById('o-obs').value = '';
-  document.getElementById('o-alerta').style.display = 'none';
+  if (!can('obras')) { showToast('Sem permissão.'); return; }
+  ['o-nome','o-cliente','o-valor','o-custo','o-margem','o-obs'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('o-data').value = new Date().toISOString().split('T')[0];
   document.getElementById('modal-obra').classList.add('open');
 }
 
-function calcObra() {
-  const total = parseFloat(document.getElementById('o-total').value) || 0;
-  const pct = parseFloat(document.getElementById('o-pct-custo').value) || 0;
-  const custo = total * (pct/100);
-  const margem = total - custo;
-  document.getElementById('o-custo-calc').value = custo.toFixed(2);
-  document.getElementById('o-margem-calc').value = margem.toFixed(2);
-
-  const alertaEl = document.getElementById('o-alerta');
-  if (total > 0 && margem/total < 0.20) {
-    alertaEl.style.display = 'block';
-    alertaEl.innerHTML = `<div class="alert alert-warn"><span class="alert-icon">⚠️</span><span>Margem estimada de ${(margem/total*100).toFixed(1)}% — abaixo dos 20% mínimos recomendados. Revise o custo ou o preço.</span></div>`;
-  } else {
-    alertaEl.style.display = 'none';
-  }
-}
-
 async function salvarObra() {
-  const nome = document.getElementById('o-nome').value.trim();
-  const cliente = document.getElementById('o-cliente').value.trim();
-  const total = parseFloat(document.getElementById('o-total').value) || 0;
-  const pctCusto = parseFloat(document.getElementById('o-pct-custo').value) || 60;
-  const tipo = document.querySelector('input[name="o-tipo"]:checked').value;
-
-  if (!nome || !cliente || !total) { showToast('Preencha nome, cliente e valor total'); return; }
-  if (total < 1) { showToast('Valor total inválido'); return; }
-
-  const obra = {
-    nome, cliente, total, tipo,
-    custo_estimado: total * (pctCusto/100),
-    margem_estimada: total * (1 - pctCusto/100),
-    pct_custo: pctCusto,
-    inicio: document.getElementById('o-inicio').value || null,
-    prazo: document.getElementById('o-prazo').value || null,
-    obs: document.getElementById('o-obs').value,
+  const nome=document.getElementById('o-nome').value.trim();
+  const cliente=document.getElementById('o-cliente').value.trim();
+  if (!nome||!cliente) { showToast('Preencha nome e cliente.'); return; }
+  const saved = await saveObra({
+    nome, cliente,
+    tipo_servico: document.querySelector('input[name="o-tipo"]:checked')?.value||'instalacao',
+    valor_contrato: parseFloat(document.getElementById('o-valor').value)||0,
+    custo_estimado: parseFloat(document.getElementById('o-custo').value)||0,
+    margem_estimada: parseFloat(document.getElementById('o-margem').value)||0,
+    data_inicio: document.getElementById('o-data').value,
+    observacoes: document.getElementById('o-obs').value.trim(),
     status: 'ativa'
-  };
-
-  const saved = await saveObra(obra);
+  });
   if (!saved) return;
-  state.obras.push(saved);
-  fecharModal('modal-obra');
-  renderObras();
-  showToast('✅ Obra cadastrada com sucesso!');
+  state.obras.unshift(saved);
+  fecharModal('modal-obra'); showToast('✅ Obra cadastrada!'); renderObras(); renderPainel();
 }
 
-// =================== DETALHE OBRA ===================
 function verDetalheObra(id) {
-  const o = state.obras.find(x => x.id === id);
-  if (!o) return;
-  const recebido = getRecebidoObra(id);
-  const gasto = getGastoObra(id);
-  const saldo = getSaldoObra(id);
-  const txns = state.transacoes.filter(t => t.obra_id === id).sort((a,b) => new Date(b.data)-new Date(a.data));
-
-  document.getElementById('d-titulo').textContent = o.nome;
-
-  const alertaStr = saldo < 0
-    ? `<div class="alert alert-danger"><span class="alert-icon">🚨</span><span>Saldo negativo — as saídas superaram as entradas desta obra!</span></div>`
-    : gasto > o.custo_estimado * 0.85
-    ? `<div class="alert alert-warn"><span class="alert-icon">⚠️</span><span>Custo em ${((gasto/o.custo_estimado)*100).toFixed(0)}% do estimado — atenção com os próximos gastos.</span></div>`
-    : `<div class="alert alert-ok"><span class="alert-icon">✅</span><span>Obra dentro do orçamento.</span></div>`;
-
-  document.getElementById('d-content').innerHTML = `
-    ${alertaStr}
-    <div class="stats-grid">
-      <div class="stat-box"><div class="stat-val">${fmt(o.total)}</div><div class="stat-label">Contrato</div></div>
-      <div class="stat-box"><div class="stat-val text-green">${fmt(recebido)}</div><div class="stat-label">Recebido</div></div>
-      <div class="stat-box"><div class="stat-val text-red">${fmt(gasto)}</div><div class="stat-label">Gasto</div></div>
-      <div class="stat-box"><div class="stat-val ${saldo<0?'text-red':'text-gold'}">${fmt(saldo)}</div><div class="stat-label">Saldo</div></div>
-      <div class="stat-box"><div class="stat-val">${fmt(o.custo_estimado)}</div><div class="stat-label">Custo Estim.</div></div>
-      <div class="stat-box"><div class="stat-val">${fmt(o.margem_estimada)}</div><div class="stat-label">Margem Estim.</div></div>
+  const o = state.obras.find(x=>x.id===id); if (!o) return;
+  const txns = state.transacoes.filter(t=>t.obra_id===id);
+  const so = getSaldoObra(id);
+  document.getElementById('modal-detalhe-content').innerHTML = `
+    <div class="card-header" style="margin-bottom:8px"><div><div class="card-title">${o.nome}</div><div class="card-sub">${o.cliente} · ${o.tipo_servico||'—'}</div></div>${o.status==='ativa'?'<span class="badge badge-green">Ativa</span>':'<span class="badge">Concluída</span>'}</div>
+    <div class="stats-grid" style="margin-top:10px">
+      <div class="stat-box"><div class="stat-val ${so<0?'text-red':'text-green'}">${fmt(so)}</div><div class="stat-label">Saldo</div></div>
+      <div class="stat-box"><div class="stat-val">${fmt(o.custo_estimado)}</div><div class="stat-label">Custo Est.</div></div>
+      <div class="stat-box"><div class="stat-val">${fmt(o.margem_estimada)}</div><div class="stat-label">Margem Est.</div></div>
     </div>
     <div class="divider"></div>
-    <div class="flex-between" style="margin-bottom:10px">
-      <div class="sec-title" style="margin:0">Movimentações</div>
-      <span class="badge badge-gold">${txns.length} lançamentos</span>
-    </div>
-    ${txns.length === 0
-      ? '<div class="text-muted" style="font-size:13px;text-align:center;padding:12px 0">Nenhuma movimentação ainda.</div>'
-      : txns.map(t => `<div class="txn-item">
-          <div>
-            <div class="txn-desc">${t.descricao || t.categoria}</div>
-            <div class="txn-date">${fmtDate(t.data)} · ${t.categoria}</div>
-          </div>
-          <div class="txn-val ${t.tipo!=='saida'?'income':'expense'}">${t.tipo!=='saida'?'+':'-'}${fmt(t.valor)}</div>
-        </div>`).join('')
-    }
+    <div class="flex-between" style="margin-bottom:10px"><div class="sec-title" style="margin:0">Movimentações</div><span class="badge">${txns.length} lançamentos</span></div>
+    ${txns.length===0?'<div class="text-muted" style="font-size:13px;text-align:center;padding:12px 0">Nenhuma movimentação.</div>':txns.map(t=>`<div class="txn-item"><div><div class="txn-desc">${t.descricao||t.categoria}</div><div class="txn-date">${fmtDate(t.data)} · ${t.categoria}</div></div><div class="txn-val ${t.tipo!=='saida'?'income':'expense'}">${t.tipo!=='saida'?'+':'-'}${fmt(t.valor)}</div></div>`).join('')}
     <div class="divider"></div>
     <div class="flex-gap">
-      ${o.status === 'ativa'
-        ? `<button class="btn btn-primary btn-sm" onclick="concluirObra(${o.id})">Marcar Concluída</button>`
-        : `<span class="badge badge-gold">Concluída</span>`
-      }
-      <button class="btn btn-danger btn-sm" onclick="excluirObra(${o.id})">Excluir</button>
+      ${can('obras')&&o.status==='ativa'?`<button class="btn btn-primary btn-sm" onclick="concluirObra(${o.id})">Marcar Concluída</button>`:''}
+      ${can('excluir')?`<button class="btn btn-danger btn-sm" onclick="excluirObra(${o.id})">Excluir</button>`:''}
     </div>
   `;
   document.getElementById('modal-detalhe').classList.add('open');
 }
 
 async function concluirObra(id) {
-  await updateObra(id, { status: 'concluida' });
-  const o = state.obras.find(x => x.id === id);
-  if (o) { o.status = 'concluida'; fecharModal('modal-detalhe'); renderObras(); showToast('🎉 Obra concluída!'); }
+  await updateObra(id,{status:'concluida'});
+  const o=state.obras.find(x=>x.id===id);
+  if (o) { o.status='concluida'; fecharModal('modal-detalhe'); renderObras(); showToast('🎉 Obra concluída!'); }
 }
 
 async function excluirObra(id) {
-  if (!confirm('Excluir esta obra e todas as suas movimentações?')) return;
+  if (!confirm('Excluir esta obra?')) return;
   await deleteObra(id);
-  state.obras = state.obras.filter(o => o.id !== id);
-  state.transacoes = state.transacoes.filter(t => t.obra_id !== id);
+  state.obras=state.obras.filter(o=>o.id!==id);
+  state.transacoes=state.transacoes.filter(t=>t.obra_id!==id);
   fecharModal('modal-detalhe'); renderObras(); showToast('Obra excluída.');
 }
 
-// =================== LANÇAMENTO ===================
 function populateObraSelect() {
-  const sel = document.getElementById('f-obra');
-  sel.innerHTML = '<option value="">— Selecione a obra —</option>';
-  state.obras.filter(o => o.status === 'ativa').forEach(o => {
-    sel.innerHTML += `<option value="${o.id}">${o.nome} (${o.cliente})</option>`;
-  });
-  document.getElementById('f-data').value = new Date().toISOString().split('T')[0];
+  const sel=document.getElementById('f-obra');
+  sel.innerHTML='<option value="">— Selecione a obra —</option>';
+  state.obras.filter(o=>o.status==='ativa').forEach(o=>{ sel.innerHTML+=`<option value="${o.id}">${o.nome} (${o.cliente})</option>`; });
+  document.getElementById('f-data').value=new Date().toISOString().split('T')[0];
 }
 
 function lancarMovimentacao() {
-  const tipo = document.querySelector('input[name="tipo"]:checked').value;
-  const obraId = parseInt(document.getElementById('f-obra').value);
-  const valor = parseFloat(document.getElementById('f-valor').value);
-  const data = document.getElementById('f-data').value;
-  const categoria = document.getElementById('f-categoria').value;
-  const descricao = document.getElementById('f-descricao').value.trim();
-  const avisoEl = document.getElementById('aviso-lancamento');
-
+  if (!can('lancar')) { showToast('Sem permissão.'); return; }
+  const tipo=document.querySelector('input[name="tipo"]:checked').value;
+  const obraId=parseInt(document.getElementById('f-obra').value);
+  const valor=parseFloat(document.getElementById('f-valor').value);
+  const data=document.getElementById('f-data').value;
+  const categoria=document.getElementById('f-categoria').value;
+  const descricao=document.getElementById('f-descricao').value.trim();
+  const avisoEl=document.getElementById('aviso-lancamento');
   if (!obraId) { showToast('Selecione a obra'); return; }
-  if (!valor || valor <= 0) { showToast('Informe um valor válido'); return; }
+  if (!valor||valor<=0) { showToast('Informe um valor válido'); return; }
   if (!data) { showToast('Informe a data'); return; }
-
-  // Verificação de proteção para saídas
-  if (tipo === 'saida') {
-    const saldoAtual = getSaldoObra(obraId);
-    if (valor > saldoAtual) {
-      avisoEl.style.display = 'block';
-      avisoEl.innerHTML = `<div class="alert alert-danger"><span class="alert-icon">🚨</span><span>Saldo da obra é ${fmt(saldoAtual)} — esta saída de ${fmt(valor)} ultrapassa o disponível. Confirma mesmo assim? <button onclick="forcarLancamento()" style="background:var(--red);color:#fff;border:none;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:12px;margin-left:8px">Lançar assim mesmo</button></span></div>`;
-      return;
-    }
+  if (tipo==='saida') {
+    const sa=getSaldoObra(obraId);
+    if (valor>sa) { avisoEl.style.display='block'; avisoEl.innerHTML=`<div class="alert alert-danger"><span class="alert-icon">🚨</span><span>Saldo da obra é ${fmt(sa)} — esta saída de ${fmt(valor)} ultrapassa o disponível. <button onclick="forcarLancamento()" style="background:var(--red);color:#fff;border:none;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:12px;margin-left:8px">Lançar assim mesmo</button></span></div>`; return; }
   }
-
-  confirmarLancamento(tipo, obraId, valor, data, categoria, descricao);
+  confirmarLancamento(tipo,obraId,valor,data,categoria,descricao);
 }
 
 function forcarLancamento() {
-  const tipo = document.querySelector('input[name="tipo"]:checked').value;
-  const obraId = parseInt(document.getElementById('f-obra').value);
-  const valor = parseFloat(document.getElementById('f-valor').value);
-  const data = document.getElementById('f-data').value;
-  const categoria = document.getElementById('f-categoria').value;
-  const descricao = document.getElementById('f-descricao').value.trim();
-  confirmarLancamento(tipo, obraId, valor, data, categoria, descricao);
+  confirmarLancamento(
+    document.querySelector('input[name="tipo"]:checked').value,
+    parseInt(document.getElementById('f-obra').value),
+    parseFloat(document.getElementById('f-valor').value),
+    document.getElementById('f-data').value,
+    document.getElementById('f-categoria').value,
+    document.getElementById('f-descricao').value.trim()
+  );
 }
 
-async function confirmarLancamento(tipo, obraId, valor, data, categoria, descricao) {
-  const txn = { tipo, obra_id: obraId, valor, data, categoria, descricao };
-  const saved = await saveTransacao(txn);
+async function confirmarLancamento(tipo,obraId,valor,data,categoria,descricao) {
+  const saved=await saveTransacao({tipo,obra_id:obraId,valor,data,categoria,descricao});
   if (!saved) return;
   state.transacoes.unshift(saved);
-  document.getElementById('f-valor').value = '';
-  document.getElementById('f-descricao').value = '';
-  document.getElementById('aviso-lancamento').style.display = 'none';
+  document.getElementById('f-valor').value='';
+  document.getElementById('f-descricao').value='';
+  document.getElementById('aviso-lancamento').style.display='none';
   showToast('✅ Movimentação registrada!');
   renderPainel();
 }
 
-// =================== CHECKLIST ===================
-const checklistItems = [
-  'Calculei o custo do material com cotação atualizada?',
-  'Incluí mão de obra no custo (horas × custo/hora)?',
-  'Incluí transporte e frete?',
-  'Considerei impostos/taxas aplicáveis?',
-  'A margem líquida ficou acima de 20%?',
-  'O prazo de execução é realista com minha equipe atual?',
-  'Defini o % de entrada (mínimo 50%)?',
-  'O contrato tem forma de pagamento clara?',
-  'Tenho capacidade de executar sem comprometer outras obras?',
-  'O cliente tem histórico de pagamento ou referências?'
-];
+const checklistItems=['Calculei o custo do material com cotação atualizada?','Incluí mão de obra no custo (horas × custo/hora)?','Incluí transporte e frete?','Considerei impostos/taxas aplicáveis?','A margem líquida ficou acima de 20%?','O prazo de execução é realista com minha equipe atual?','Defini o % de entrada (mínimo 50%)?','O contrato tem forma de pagamento clara?','Tenho capacidade de executar sem comprometer outras obras?','O cliente tem histórico de pagamento ou referências?'];
+const CK='veneziano_checklist';
 
 function renderChecklist() {
-  const saved = JSON.parse(localStorage.getItem('atrio_checklist') || '{}');
-  const el = document.getElementById('checklist-container');
-  el.innerHTML = checklistItems.map((item, i) => `
-    <div class="card" style="padding:12px 14px;margin-bottom:8px;cursor:pointer" onclick="toggleCheck(${i})" id="chk-${i}">
-      <div style="display:flex;align-items:center;gap:10px">
-        <div style="width:20px;height:20px;border-radius:50%;border:2px solid ${saved[i]?'var(--accent)':'var(--border)'};background:${saved[i]?'var(--accent)':'transparent'};flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px">${saved[i]?'✓':''}</div>
-        <span style="font-size:13px;color:${saved[i]?'var(--text)':'var(--text2)'}">${item}</span>
-      </div>
-    </div>
-  `).join('');
-  const checked = Object.values(saved).filter(Boolean).length;
-  if (checked === checklistItems.length) {
-    el.innerHTML += `<div class="alert alert-ok" style="margin-top:8px"><span class="alert-icon">🎯</span><span>Todos os itens verificados — pode fechar a proposta com confiança!</span></div>`;
-  } else if (checked > 0) {
-    el.innerHTML += `<div class="alert alert-warn" style="margin-top:8px"><span class="alert-icon">📋</span><span>${checked}/${checklistItems.length} itens verificados.</span></div>`;
-  }
+  const saved=JSON.parse(localStorage.getItem(CK)||'{}');
+  const el=document.getElementById('checklist-container');
+  el.innerHTML=checklistItems.map((item,i)=>`<div class="card" style="padding:12px 14px;margin-bottom:8px;cursor:pointer" onclick="toggleCheck(${i})"><div style="display:flex;align-items:center;gap:10px"><div style="width:20px;height:20px;border-radius:50%;border:2px solid ${saved[i]?'var(--atrio)':'var(--border)'};background:${saved[i]?'var(--atrio)':'transparent'};flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;color:#fff">${saved[i]?'✓':''}</div><span style="font-size:13px;color:${saved[i]?'var(--text)':'var(--text2)'}">${item}</span></div></div>`).join('');
+  const c=Object.values(saved).filter(Boolean).length;
+  if (c===checklistItems.length) el.innerHTML+='<div class="alert alert-ok" style="margin-top:8px"><span class="alert-icon">🎯</span><span>Todos os itens verificados — pode fechar a proposta!</span></div>';
+  else if (c>0) el.innerHTML+=`<div class="alert alert-warn" style="margin-top:8px"><span class="alert-icon">📋</span><span>${c}/${checklistItems.length} itens verificados.</span></div>`;
 }
+function toggleCheck(i) { const s=JSON.parse(localStorage.getItem(CK)||'{}'); s[i]=!s[i]; localStorage.setItem(CK,JSON.stringify(s)); renderChecklist(); }
+function resetChecklist() { localStorage.removeItem(CK); renderChecklist(); }
 
-function toggleCheck(i) {
-  const saved = JSON.parse(localStorage.getItem('atrio_checklist') || '{}');
-  saved[i] = !saved[i];
-  localStorage.setItem('atrio_checklist', JSON.stringify(saved));
-  renderChecklist();
-}
+function fecharModal(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.modal-overlay').forEach(m=>m.addEventListener('click',function(e){if(e.target===this) this.classList.remove('open');}));
 
-function resetChecklist() {
-  localStorage.removeItem('atrio_checklist');
-  renderChecklist();
-}
-
-// =================== MODAL ===================
-function fecharModal(id) {
-  document.getElementById(id).classList.remove('open');
-}
-
-document.querySelectorAll('.modal-overlay').forEach(m => {
-  m.addEventListener('click', function(e) {
-    if (e.target === this) this.classList.remove('open');
-  });
-});
-
-// =================== TOAST ===================
+let toastTimer;
 function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2800);
+  if (!msg) return;
+  const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show');
+  clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('show'),2800);
 }
 
-// =================== INIT ===================
-async function init() {
-  showToast('⏳ Carregando dados...');
-  await loadState();
-  updateHeader();
-  renderPainel();
-}
-init();
+document.getElementById('login-password').addEventListener('keydown',e=>{if(e.key==='Enter') doLogin();});
+document.getElementById('login-email').addEventListener('keydown',e=>{if(e.key==='Enter') document.getElementById('login-password').focus();});
+
+initAuth();
 </script>
 </body>
 </html>
