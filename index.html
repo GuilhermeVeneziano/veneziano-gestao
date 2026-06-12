@@ -1181,11 +1181,34 @@
       <div class="form-label">Nome / Identificação da Obra *</div>
       <input class="form-input" type="text" id="o-nome" placeholder="Ex: Residência Silva — Jd. Paulista">
     </div>
-    <!-- Endereço da obra -->
-    <div class="form-group">
-      <div class="form-label">Endereço da Obra</div>
-      <input class="form-input" type="text" id="o-endereco-obra" placeholder="Rua, número, bairro">
-    </div>
+
+      <!-- FASE 2.2 OBRAS INÍCIO — endereço da obra -->
+      <div class="form-row col2">
+        <div class="form-group">
+          <div class="form-label">CEP</div>
+          <input class="form-input" type="text" id="o-cep" placeholder="17000-000"
+            maxlength="9" oninput="mascaraCEP(this)" onblur="buscarCEPObra(this.value)">
+        </div>
+        <div class="form-group">
+          <div class="form-label">Número</div>
+          <input class="form-input" type="text" id="o-numero" placeholder="123">
+        </div>
+      </div>
+      <div class="form-group">
+        <div class="form-label">Endereço (Rua / Avenida)</div>
+        <input class="form-input" type="text" id="o-endereco-obra" placeholder="Rua, Avenida...">
+      </div>
+      <div class="form-row col2">
+        <div class="form-group">
+          <div class="form-label">Bairro</div>
+          <input class="form-input" type="text" id="o-bairro" placeholder="Bairro">
+        </div>
+        <div class="form-group">
+          <div class="form-label">Cidade</div>
+          <input class="form-input" type="text" id="o-cidade-obra" placeholder="Bauru">
+        </div>
+      </div>
+      <!-- FASE 2.2 OBRAS FIM — endereço da obra -->
     <!-- Tipo e Status -->
     <div class="form-row col2">
       <div class="form-group">
@@ -1467,13 +1490,13 @@ function renderPainel(){
   document.getElementById('sb-saida').textContent=fmt(saida);
   document.getElementById('sb-saldo').textContent=fmt(saldo);
   document.getElementById('sb-saldo').className='sb-val '+(saldo>=0?'text-green':'text-red');
-  document.getElementById('sb-obras').textContent=state.obras.filter(o=>o.status==='ativa').length;
+  document.getElementById('sb-obras').textContent=state.obras.filter(o=>STATUS_ATIVOS.includes(o.status)).length;
   const alertasEl=document.getElementById('alertas-container');
   alertasEl.innerHTML='';
-  const risco=state.obras.filter(o=>o.status==='ativa'&&getSaldo(o.id)<0);
+  const risco=state.obras.filter(o=>STATUS_ATIVOS.includes(o.status)&&getSaldo(o.id)<0);
   if(risco.length>0)alertasEl.innerHTML+=`<div class="alert alert-danger"><span class="alert-icon">🚨</span><span>${risco.length} obra(s) com saldo negativo.</span></div>`;
   if(saldo<0)alertasEl.innerHTML+=`<div class="alert alert-warn"><span class="alert-icon">⚠️</span><span>Saldo mensal negativo.</span></div>`;
-  const ativas=state.obras.filter(o=>o.status==='ativa');
+  const ativas=state.obras.filter(o=>STATUS_ATIVOS.includes(o.status));
   const ol=document.getElementById('obras-painel-list');
   ol.innerHTML=ativas.length===0?'<div class="text-muted" style="font-size:13px;padding:20px 0;text-align:center">Nenhuma obra ativa.</div>':ativas.map(o=>{const so=getSaldo(o.id);const pct=(o.total||o.valor_contrato||0)>0?Math.min(100,Math.round(so/(o.total||o.valor_contrato||0)*100)):0;const fc=so<0?'fill-red':pct>60?'fill-green':'fill-yellow';return `<div class="contract-item" onclick="verDetalheObra(${o.id})"><div class="ci-top"><div><div class="ci-name">${o.nome}</div><div class="ci-client">${o.cliente}</div></div><span class="badge badge-green">Ativa</span></div><div class="progress-wrap"><div class="progress-label"><span>Saldo</span><span>${fmt(so)}</span></div><div class="progress-bar"><div class="progress-fill ${fc}" style="width:${Math.max(0,pct)}%"></div></div></div><div class="ci-amounts"><div class="ci-amount"><div class="ci-amount-label">Contrato</div><div class="ci-amount-val">${fmt(o.total||o.valor_contrato||0)}</div></div><div class="ci-amount"><div class="ci-amount-label">Custo Est.</div><div class="ci-amount-val">${fmt(o.custo_estimado)}</div></div><div class="ci-amount"><div class="ci-amount-label">Margem Est.</div><div class="ci-amount-val">${fmt(o.margem_estimada)}</div></div></div></div>`;}).join('');
   const tl=document.getElementById('txn-list');
@@ -1492,7 +1515,7 @@ function filtrarObras(f){
 const STATUS_LABEL = {
   orcamento:'Orçamento', aprovada:'Aprovada', medicao:'Medição',
   producao:'Produção', instalacao:'Instalação', finalizada:'Finalizada',
-  pausada:'Pausada', cancelada:'Cancelada', ativa:'Ativa'
+  pausada:'Pausada', cancelada:'Cancelada'
 };
 const STATUS_COLOR = {
   orcamento:'rgba(109,92,255,0.15)|#a78bfa',
@@ -1503,149 +1526,101 @@ const STATUS_COLOR = {
   finalizada:'rgba(34,197,94,0.12)|#86efac',
   pausada:'rgba(245,158,11,0.12)|#fbbf24',
   cancelada:'rgba(239,68,68,0.12)|#fca5a5',
-  ativa:'rgba(34,197,94,0.15)|#22c55e'
 };
+// FASE 2.2 — status considerados ativos para filtros e painel
+const STATUS_ATIVOS = ['aprovada', 'medicao', 'producao', 'instalacao'];
 function statusBadge(status){
   const s = status||'orcamento';
   const parts = (STATUS_COLOR[s]||'rgba(150,150,150,0.15)|#999').split('|');
   return `<span style="font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px;background:${parts[0]};color:${parts[1]}">${STATUS_LABEL[s]||s}</span>`;
 }
-<div class="form-group">
-        <div class="form-label">Nome / Identificação da Obra *</div>
-        <input class="form-input" type="text" id="o-nome" placeholder="Ex: Residência Silva — Jd. Paulista">
-      </div>
-
-      <!-- FASE 2.2 OBRAS INÍCIO — endereço da obra -->
-      <div class="form-row col2">
-        <div class="form-group">
-          <div class="form-label">CEP</div>
-          <input class="form-input" type="text" id="o-cep" placeholder="17000-000"
-            maxlength="9" oninput="mascaraCEP(this)" onblur="buscarCEPObra(this.value)">
-        </div>
-        <div class="form-group">
-          <div class="form-label">Número</div>
-          <input class="form-input" type="text" id="o-numero" placeholder="123">
-        </div>
-      </div>
-      <div class="form-group">
-        <div class="form-label">Endereço (Rua / Avenida)</div>
-        <input class="form-input" type="text" id="o-endereco-obra" placeholder="Rua, Avenida...">
-      </div>
-      <div class="form-row col2">
-        <div class="form-group">
-          <div class="form-label">Bairro</div>
-          <input class="form-input" type="text" id="o-bairro" placeholder="Bairro">
-        </div>
-        <div class="form-group">
-          <div class="form-label">Cidade</div>
-          <input class="form-input" type="te// FASE 2.2 OBRAS INÍCIO — renderObras com busca por texto
-function renderObras(){
-  const el = document.getElementById('obras-list');
-  if(!el) return;
-  const busca = (document.getElementById('busca-obra')?.value||'').toLowerCase().trim();
-  let lista = state.obras;
-  if(_filtroObra !== 'todas') lista = lista.filter(o => (o.status||'orcamento') === _filtroObra);
-  if(busca) lista = lista.filter(o =>
-    (o.nome||'').toLowerCase().includes(busca) ||
-    (o.cliente||'').toLowerCase().includes(busca) ||
-    (STATUS_LABEL[o.status]||'').toLowerCase().includes(busca)
-  );
-  if(!lista.length){xt" id="o-cidade-obra" placeholder="Bauru">
-        </div>
-      </div>
-      <!-- FASE 2.2 OBRAS FIM — endereço da obra -->
-    el.innerHTML='<div class="text-muted" style="font-size:13px;padding:30px 0;text-align:center">Nenhuma obra'+(_filtroObra!=='todas'?' com status "'+STATUS_LABEL[_filtroObra]+'"':'')+' cadastrada.</div>';
-    return;
-  }
-  el.innerHTML=lista.map(o=>{
-    const so=getSaldo(o.id);
-    const entPerc = o.valor_contrato > 0 ? Math.round((o.entrada_recebida||0)/(o.total||o.valor_contrato||0)*100) : 0;
-    const prazoCor = o.data_previsao_entrega && new Date(o.data_previsao_entrega) < new Date() && o.status !== 'finalizada' ? 'text-red' : '';
-    return `<div class="contract-item" onclick="verDetalheObra(${o.id})">
-      <div class="ci-top">
-        <div>
-          <div class="ci-name">${o.nome}</div>
-          <div class="ci-client">${o.cliente||'—'}${o.endereco_obra?' · '+o.endereco_obra:''}</div>
-        </div>
-        ${statusBadge(o.status)}
-      </div>
-      <div class="ci-amounts" style="margin-top:10px">
-        <div class="ci-amount"><div class="ci-amount-label">Contrato</div><div class="ci-amount-val">${fmt(o.total||o.valor_contrato||0)}</div></div>
-        <div class="ci-amount"><div class="ci-amount-label">Saldo</div><div class="ci-amount-val ${so<0?'text-red':''}">${fmt(so)}</div></div>
-        <div class="ci-amount"><div class="ci-amount-label">Entrada</div><div class="ci-amount-val ${entPerc<50&&(o.total||o.valor_contrato||0)>0?'text-red':''}">${entPerc}%</div></div>
-        <div class="ci-amount"><div class="ci-amount-label">Entrega</div><div class="ci-amount-val ${prazoCor}" style="font-size:12px">${fmtDate(o.data_previsao_entrega)}</div></div>
-      </div>
-    </div>`;
-  }).join('');
-}
-
+// FASE 2.2 OBRAS INÍCIO — funções do modal de obra
 function abrirModalObra(obraId){
   if(!can('obras')){showToast('Sem permissão.');return;}
-  // Populate clientes dropdown
   const sel = document.getElementById('o-cliente-id');
   sel.innerHTML = '<option value="">— Selecione o cliente —</option>';
-  state.clientes.forEach(c => {
-    sel.innerHTML += `<option value="${c.id}">${c.nome}${c.cidade?' - '+c.cidade:''}</option>`;
+  if(!state.clientes.length){
+    sel.innerHTML += '<option disabled>Nenhum cliente cadastrado — cadastre primeiro</option>';
+  } else {
+    state.clientes.forEach(c => {
+      sel.innerHTML += `<option value="${c.id}">${c.nome}${c.telefone?' · '+c.telefone:''}</option>`;
+    });
+  }
+  ['entrada-perc-info','margem-perc-info'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.style.display='none';
   });
   if(obraId) {
-    // EDIT mode
     const o = state.obras.find(x => x.id === obraId);
     if(!o) return;
     document.getElementById('modal-obra-title').textContent = 'Editar Obra';
-    document.getElementById('o-id').value = o.id;
-    document.getElementById('o-cliente-id').value = o.cliente_id || '';
-    document.getElementById('o-nome').value = o.nome || '';
-    document.getElementById('o-endereco-obra').value = o.endereco_obra || '';
-    document.getElementById('o-tipo').value = o.tipo_servico || 'instalacao';
-    document.getElementById('o-status').value = o.status || 'orcamento';
-    document.getElementById('o-valor').value = o.valor_contrato || '';
+    document.getElementById('o-id').value               = o.id;
+    document.getElementById('o-cliente-id').value       = o.cliente_id || '';
+    document.getElementById('o-nome').value             = o.nome || '';
+    const elCep = document.getElementById('o-cep');         if(elCep) elCep.value = o.cep || '';
+    const elEnd = document.getElementById('o-endereco-obra');if(elEnd) elEnd.value = o.endereco_obra || '';
+    const elNum = document.getElementById('o-numero');       if(elNum) elNum.value = o.numero || '';
+    const elBai = document.getElementById('o-bairro');       if(elBai) elBai.value = o.bairro || '';
+    const elCid = document.getElementById('o-cidade-obra');  if(elCid) elCid.value = o.cidade_obra || '';
+    document.getElementById('o-tipo').value             = o.tipo_servico || o.tipo || 'instalacao';
+    document.getElementById('o-status').value           = o.status || 'orcamento';
+    document.getElementById('o-valor').value            = o.total || o.valor_contrato || '';
     document.getElementById('o-entrada-prevista').value = o.entrada_prevista || '';
-    document.getElementById('o-custo').value = o.custo_estimado || '';
-    document.getElementById('o-margem').value = o.margem_estimada || '';
-    document.getElementById('o-data').value = o.data_inicio || '';
-    document.getElementById('o-data-entrega').value = o.data_previsao_entrega || '';
-    document.getElementById('o-obs').value = o.observacoes || '';
+    document.getElementById('o-custo').value            = o.custo_estimado || '';
+    document.getElementById('o-margem').value           = o.margem_estimada || '';
+    document.getElementById('o-data').value             = o.inicio || o.data_inicio || '';
+    document.getElementById('o-data-entrega').value     = o.data_previsao_entrega || o.prazo || '';
+    document.getElementById('o-obs').value              = o.obs || o.observacoes || '';
     calcEntradaPerc(); calcMargem();
   } else {
-    // NEW mode
     document.getElementById('modal-obra-title').textContent = 'Nova Obra';
-    document.getElementById('o-id').value = '';
-    ['o-nome','o-endereco-obra','o-obs'].forEach(id=>document.getElementById(id).value='');
-    ['o-valor','o-entrada-prevista','o-custo','o-margem'].forEach(id=>document.getElementById(id).value='');
-    document.getElementById('o-tipo').value = 'instalacao';
+    ['o-id','o-nome','o-obs'].forEach(id=>{
+      const el=document.getElementById(id); if(el) el.value='';
+    });
+    ['o-cep','o-endereco-obra','o-numero','o-bairro'].forEach(id=>{
+      const el=document.getElementById(id); if(el) el.value='';
+    });
+    ['o-valor','o-entrada-prevista','o-custo','o-margem'].forEach(id=>{
+      const el=document.getElementById(id); if(el) el.value='';
+    });
+    document.getElementById('o-cliente-id').value = '';
+    const elCid2 = document.getElementById('o-cidade-obra'); if(elCid2) elCid2.value = 'Bauru';
+    document.getElementById('o-tipo').value   = 'instalacao';
     document.getElementById('o-status').value = 'orcamento';
-    document.getElementById('o-data').value = new Date().toISOString().split('T')[0];
+    document.getElementById('o-data').value   = new Date().toISOString().split('T')[0];
     document.getElementById('o-data-entrega').value = '';
-    document.getElementById('entrada-perc-info').style.display = 'none';
-    document.getElementById('margem-perc-info').style.display = 'none';
   }
   document.getElementById('modal-obra').classList.add('open');
 }
+
 function preencherEnderecoCliente(){
   const clienteId = parseInt(document.getElementById('o-cliente-id').value);
   const c = state.clientes.find(x => x.id === clienteId);
-  if(c && c.endereco && !document.getElementById('o-endereco-obra').value) {
-    document.getElementById('o-endereco-obra').value = c.endereco + (c.cidade ? ', '+c.cidade : '');
+  if(c && c.endereco){
+    const elEnd = document.getElementById('o-endereco-obra');
+    if(elEnd && !elEnd.value) elEnd.value = c.endereco;
   }
 }
+
 function calcEntradaPerc(){
-  const total = parseFloat(document.getElementById('o-valor').value)||0;
+  const total   = parseFloat(document.getElementById('o-valor').value)||0;
   const entrada = parseFloat(document.getElementById('o-entrada-prevista').value)||0;
   const el = document.getElementById('entrada-perc-info');
-  if(total > 0 && entrada >= 0){
+  if(!el) return;
+  if(total > 0 && entrada > 0){
     const perc = Math.round(entrada/total*100);
     el.style.display = 'block';
     if(perc >= 50){ el.style.background='rgba(34,197,94,0.1)'; el.style.color='var(--green)'; el.textContent='✅ Entrada de '+perc+'% — dentro da regra (mínimo 50%)'; }
-    else if(perc > 0){ el.style.background='rgba(239,68,68,0.1)'; el.style.color='var(--red)'; el.textContent='🚨 Entrada de '+perc+'% — abaixo do mínimo de 50%!'; }
-    else { el.style.display='none'; }
+    else { el.style.background='rgba(239,68,68,0.1)'; el.style.color='var(--red)'; el.textContent='🚨 Entrada de '+perc+'% — abaixo do mínimo de 50%!'; }
   } else { el.style.display='none'; }
 }
+
 function calcMargem(){
   const total = parseFloat(document.getElementById('o-valor').value)||0;
   const custo = parseFloat(document.getElementById('o-custo').value)||0;
   const margem = total - custo;
-  document.getElementById('o-margem').value = margem > 0 ? margem.toFixed(2) : '';
+  if(total > 0 && custo > 0) document.getElementById('o-margem').value = margem.toFixed(2);
   const el = document.getElementById('margem-perc-info');
+  if(!el) return;
   if(total > 0 && custo > 0){
     const perc = Math.round(margem/total*100);
     el.style.display = 'block';
@@ -1657,41 +1632,62 @@ function calcMargem(){
 
 async function salvarObra(){
   const clienteId = parseInt(document.getElementById('o-cliente-id').value)||null;
-  const nome = document.getElementById('o-nome').value.trim();
-  if(!clienteId){showToast('Selecione o cliente.');return;}
-  if(!nome){showToast('Informe o nome da obra.');return;}
-  const cliente = state.clientes.find(c => c.id === clienteId);
+  const nome      = document.getElementById('o-nome').value.trim();
+  if(!clienteId){ showToast('Selecione o cliente.'); return; }
+  if(!nome){      showToast('Informe o nome da obra.'); return; }
+
+  const cliente  = state.clientes.find(c => c.id === clienteId);
+  const total    = parseFloat(document.getElementById('o-valor').value)||0;
+  const custo    = parseFloat(document.getElementById('o-custo').value)||0;
+  const margem   = total>0 && custo>0 ? total-custo : parseFloat(document.getElementById('o-margem').value)||0;
+  const entPrev  = parseFloat(document.getElementById('o-entrada-prevista').value)||0;
+  const tipoServ = document.getElementById('o-tipo').value||'instalacao';
+  const dataInicio  = document.getElementById('o-data').value||null;
+  const dataEntrega = document.getElementById('o-data-entrega').value||null;
+  const obs      = document.getElementById('o-obs').value.trim()||null;
+
+  if(total>0 && entPrev>0 && entPrev/total < 0.50){
+    if(!confirm('⚠️ Entrada prevista abaixo de 50% do valor total.\nDeseja continuar mesmo assim?')) return;
+  }
+  if(total>0 && custo>0 && margem/total < 0.20){
+    if(!confirm('⚠️ Margem estimada abaixo de 20%.\nDeseja continuar mesmo assim?')) return;
+  }
+
+  const getVal = id => { const el=document.getElementById(id); return el ? (el.value||'').trim()||null : null; };
+
   const dados = {
-    cliente_id: clienteId,
-    cliente: cliente ? cliente.nome : '',
+    cliente_id:            clienteId,
+    cliente:               cliente ? cliente.nome : '',
     nome,
-    endereco_obra:         document.getElementById('o-endereco-obra').value.trim()||null,
-    tipo_servico:          document.getElementById('o-tipo').value||'instalacao',
-    tipo:                  document.getElementById('o-tipo').value||'instalacao',
+    cep:                   getVal('o-cep'),
+    endereco_obra:         getVal('o-endereco-obra'),
+    numero:                getVal('o-numero'),
+    bairro:                getVal('o-bairro'),
+    cidade_obra:           getVal('o-cidade-obra'),
+    tipo_servico:          tipoServ,
+    tipo:                  tipoServ,
     status:                document.getElementById('o-status').value||'orcamento',
-    total:                parseFloat(document.getElementById('o-valor').value)||0,
-    valor_contrato:        parseFloat(document.getElementById('o-valor').value)||0,
-    entrada_prevista:      parseFloat(document.getElementById('o-entrada-prevista').value)||0,
-    entrada_recebida:      0,
-    custo_estimado:        parseFloat(document.getElementById('o-custo').value)||0,
-    margem_estimada:       parseFloat(document.getElementById('o-margem').value)||0,
-    inicio:                document.getElementById('o-data').value||null,
-    data_inicio:           document.getElementById('o-data').value||null,
-    data_previsao_entrega: document.getElementById('o-data-entrega').value||null,
-    prazo:                 document.getElementById('o-data-entrega').value||null,
-    obs:                   document.getElementById('o-obs').value.trim()||null,
-    observacoes:           document.getElementById('o-obs').value.trim()||null,
+    total,
+    valor_contrato:        total,
+    entrada_prevista:      entPrev,
+    custo_estimado:        custo,
+    margem_estimada:       margem,
+    inicio:                dataInicio,
+    data_inicio:           dataInicio,
+    data_previsao_entrega: dataEntrega,
+    prazo:                 dataEntrega,
+    obs,
+    observacoes:           obs,
   };
+
   const obraId = document.getElementById('o-id').value;
-  if(obraId) {
-    // EDIT
-    const {error} = await sb.from('obras').update(dados).eq('id',parseInt(obraId));
-    if(error){showToast('Erro: '+error.message);return;}
-    const idx = state.obras.findIndex(o => o.id === parseInt(obraId));
-    if(idx >= 0) state.obras[idx] = {...state.obras[idx], ...dados};
+  if(obraId){
+    const {error} = await sb.from('obras').update(dados).eq('id',parseInt(obraId)).eq('empresa_id',currentEmpresaId);
+    if(error){ showToast('Erro: '+error.message); return; }
+    const idx = state.obras.findIndex(o => o.id===parseInt(obraId));
+    if(idx>=0) state.obras[idx] = {...state.obras[idx],...dados};
     showToast('✅ Obra atualizada!');
   } else {
-    // NEW
     const saved = await saveObra(dados);
     if(!saved) return;
     state.obras.unshift(saved);
@@ -1701,6 +1697,58 @@ async function salvarObra(){
   renderObras();
   renderPainel();
 }
+// FASE 2.2 OBRAS FIM — funções do modal de obra
+
+// FASE 2.2 OBRAS INÍCIO — renderObras com busca por texto
+function renderObras(){
+  const el = document.getElementById('obras-list');
+  if(!el) return;
+  const busca = (document.getElementById('busca-obra')?.value||'').toLowerCase().trim();
+  let lista = state.obras;
+  if(_filtroObra !== 'todas') lista = lista.filter(o => (o.status||'orcamento') === _filtroObra);
+  if(busca) lista = lista.filter(o =>
+    (o.nome||'').toLowerCase().includes(busca) ||
+    (o.cliente||'').toLowerCase().includes(busca) ||
+    (STATUS_LABEL[o.status]||'').toLowerCase().includes(busca)
+  );
+  if(!lista.length){
+    el.innerHTML='<div class="text-muted" style="font-size:13px;padding:30px 0;text-align:center">Nenhuma obra'+(_filtroObra!=='todas'?' com status "'+STATUS_LABEL[_filtroObra]+'"':'')+' encontrada.</div>';
+    return;
+  }
+  el.innerHTML=lista.map(o=>{
+    const total = o.total||o.valor_contrato||0;
+    const margem = o.margem_estimada||0;
+    const entRec = o.entrada_recebida||0;
+    const entPrev = o.entrada_prevista||0;
+    const entPerc = total>0 ? Math.round(entRec/total*100) : 0;
+    const margPerc = total>0 ? Math.round(margem/total*100) : 0;
+    const prazoVen = (o.data_previsao_entrega||o.prazo) && new Date(o.data_previsao_entrega||o.prazo) < new Date() && o.status !== 'finalizada' && o.status !== 'cancelada';
+    const local = [o.endereco_obra, o.bairro, o.cidade_obra||o.cidade].filter(Boolean).join(', ');
+    return `<div class="contract-item">
+      <div class="ci-top" style="cursor:pointer" onclick="verDetalheObra(${o.id})">
+        <div style="flex:1;min-width:0">
+          <div class="ci-name">${o.nome}</div>
+          <div class="ci-client">👤 ${o.cliente||'—'}${local?' · 📍 '+local:''}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+          ${statusBadge(o.status)}
+          ${prazoVen?'<span style="font-size:10px;color:var(--red)">⚠️ Prazo vencido</span>':''}
+        </div>
+      </div>
+      <div class="ci-amounts" style="margin-top:10px">
+        <div class="ci-amount"><div class="ci-amount-label">Contrato</div><div class="ci-amount-val">${fmt(total)}</div></div>
+        <div class="ci-amount"><div class="ci-amount-label">Margem</div><div class="ci-amount-val ${margPerc<20&&total>0?'text-red':margPerc>=20?'text-green':''}">${margPerc}%</div></div>
+        <div class="ci-amount"><div class="ci-amount-label">Entrada</div><div class="ci-amount-val ${entPerc<50&&entPrev>0?'text-red':''}">${entPerc}%</div></div>
+        <div class="ci-amount"><div class="ci-amount-label">Prazo</div><div class="ci-amount-val ${prazoVen?'text-red':''}" style="font-size:11px">${fmtDate(o.data_previsao_entrega||o.prazo)}</div></div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:10px;justify-content:flex-end">
+        ${can('obras')?`<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();abrirModalObra(${o.id})">✏️ Editar</button>`:''}
+        ${can('excluir')?`<button class="btn btn-danger btn-sm" onclick="event.stopPropagation();confirmarExcluirObra(${o.id},'${String(o.nome||'').replace(/'/g,' ')}')" >Excluir</button>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+// FASE 2.2 OBRAS FIM — renderObras com busca por texto
 
 function verDetalheObra(id){
   const o=state.obras.find(x=>x.id===id);if(!o)return;
@@ -1737,7 +1785,7 @@ function verDetalheObra(id){
     <div class="flex-gap">
       ${can('obras')?`<button class="btn btn-ghost btn-sm" onclick="fecharModal('modal-detalhe');abrirModalObra(${o.id})">Editar</button>`:''}
       ${can('obras')&&o.status!=='finalizada'&&o.status!=='cancelada'?`<button class="btn btn-primary btn-sm" onclick="alterarStatusObra(${o.id},'finalizada')">Finalizar</button>`:''}
-      ${can('excluir')?`<button class="btn btn-danger btn-sm" onclick="excluirObra(${o.id})">Excluir</button>`:''}
+      ${can('excluir')?`<button class="btn btn-danger btn-sm" onclick="confirmarExcluirObra(${o.id},encodeURIComponent(o.nome||''))">Excluir</button>`:''}
     </div>
   `;
   document.getElementById('modal-detalhe').classList.add('open');
@@ -1748,12 +1796,13 @@ async function alterarStatusObra(id, novoStatus){
   if(o){o.status=novoStatus;fecharModal('modal-detalhe');renderObras();renderPainel();showToast('Status atualizado!');}
 }
 
-async function concluirObra(id){await updateObra(id,{status:'concluida'});const o=state.obras.find(x=>x.id===id);if(o){o.status='concluida';fecharModal('modal-detalhe');renderObras();showToast('🎉 Obra concluída!');}}
+async function concluirObra(id){await updateObra(id,{status:'finalizada'});const o=state.obras.find(x=>x.id===id);if(o){o.status='finalizada';fecharModal('modal-detalhe');renderObras();showToast('✅ Obra finalizada!');}}
 async function excluirObra(id){if(!confirm('Excluir esta obra?'))return;await deleteObra(id);state.obras=state.obras.filter(o=>o.id!==id);state.transacoes=state.transacoes.filter(t=>t.obra_id!==id);fecharModal('modal-detalhe');renderObras();showToast('Obra excluída.');}
 
 // FASE 2.2 OBRAS INÍCIO — excluir seguro + CEP obra
-function confirmarExcluirObra(id, nome){
+function confirmarExcluirObra(id, nomeEncoded){
   if(!can('excluir')){ showToast('Sem permissão.'); return; }
+  const nome = typeof nomeEncoded==='string' ? decodeURIComponent(nomeEncoded) : (nomeEncoded||'');
   if(!confirm('Excluir obra "'+nome+'"?\nAs movimentações vinculadas serão desvinculadas.')) return;
   excluirObraConfirmado(id);
 }
@@ -1782,69 +1831,8 @@ async function buscarCEPObra(cep){
 }
 // FASE 2.2 OBRAS FIM — excluir seguro + CEP obra
 
-// FASE 2.2 OBRAS INÍCIO — excluir seguro + CEP obra
-function confirmarExcluirObra(id, nome){
-  if(!can('excluir')){ showToast('Sem permissão.'); return; }
-  if(!confirm('Excluir obra "'+nome+'"?\nAs movimentações vinculadas serão desvinculadas.')) return;
-  excluirObraConfirmado(id);
-}
-async function excluirObraConfirmado(id){
-  const {error} = await sb.from('obras').delete().eq('id',id).eq('empresa_id',currentEmpresaId);
-  if(error){ showToast('Erro: '+error.message); return; }
-  state.obras = state.obras.filter(o => o.id !== id);
-  state.transacoes = state.transacoes.filter(t => t.obra_id !== id);
-  fecharModal('modal-detalhe');
-  renderObras(); renderPainel();
-  showToast('Obra excluída.');
-}
-async function buscarCEPObra(cep){
-  const digits = (cep||'').replace(/\D/g,'');
-  if(digits.length !== 8) return;
-  try {
-    const r = await fetch('https://viacep.com.br/ws/'+digits+'/json/');
-    const d = await r.json();
-    if(!d.erro){
-      document.getElementById('o-endereco-obra').value = d.logradouro || '';
-      document.getElementById('o-bairro').value        = d.bairro     || '';
-      document.getElementById('o-cidade-obra').value   = d.localidade || 'Bauru';
-      document.getElementById('o-numero').focus();
-    }
-  } catch(e){}
-}
-// FASE 2.2 OBRAS FIM — excluir seguro + CEP obra
 
-// FASE 2.2 OBRAS INÍCIO — excluir seguro + CEP obra
-function confirmarExcluirObra(id, nome){
-  if(!can('excluir')){ showToast('Sem permissão.'); return; }
-  if(!confirm('Excluir obra "'+nome+'"?\nAs movimentações vinculadas serão desvinculadas.')) return;
-  excluirObraConfirmado(id);
-}
-async function excluirObraConfirmado(id){
-  const {error} = await sb.from('obras').delete().eq('id',id).eq('empresa_id',currentEmpresaId);
-  if(error){ showToast('Erro: '+error.message); return; }
-  state.obras = state.obras.filter(o => o.id !== id);
-  state.transacoes = state.transacoes.filter(t => t.obra_id !== id);
-  fecharModal('modal-detalhe');
-  renderObras(); renderPainel();
-  showToast('Obra excluída.');
-}
-async function buscarCEPObra(cep){
-  const digits = (cep||'').replace(/\D/g,'');
-  if(digits.length !== 8) return;
-  try {
-    const r = await fetch('https://viacep.com.br/ws/'+digits+'/json/');
-    const d = await r.json();
-    if(!d.erro){
-      document.getElementById('o-endereco-obra').value = d.logradouro || '';
-      document.getElementById('o-bairro').value        = d.bairro     || '';
-      document.getElementById('o-cidade-obra').value   = d.localidade || 'Bauru';
-      document.getElementById('o-numero').focus();
-    }
-  } catch(e){}
-}
-// FASE 2.2 OBRAS FIM — excluir seguro + CEP obra
-
-function populateObraSelect(){const sel=document.getElementById('f-obra');sel.innerHTML='<option value="">— Selecione a obra —</option>';state.obras.filter(o=>o.status==='ativa').forEach(o=>{sel.innerHTML+=`<option value="${o.id}">${o.nome} (${o.cliente})</option>`;});document.getElementById('f-data').value=new Date().toISOString().split('T')[0];}
+function populateObraSelect(){const sel=document.getElementById('f-obra');sel.innerHTML='<option value="">— Selecione a obra —</option>';state.obras.filter(o=>STATUS_ATIVOS.includes(o.status)).forEach(o=>{sel.innerHTML+=`<option value="${o.id}">${o.nome} (${o.cliente})</option>`;});document.getElementById('f-data').value=new Date().toISOString().split('T')[0];}
 
 function lancarMovimentacao(){
   if(!can('lancar')){showToast('Sem permissão.');return;}
